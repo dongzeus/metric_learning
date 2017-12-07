@@ -115,13 +115,17 @@ class VAMetric_ang(nn.Module):
     def __init__(self, framenum=120):
         super(VAMetric_ang, self).__init__()
         self.vfc1 = nn.Linear(in_features=1024, out_features=512)
-        self.vfc2 = nn.Linear(in_features=512, out_features=32)
-        self.vfc3 = nn.Linear(in_features=256, out_features=128)
-        self.vfc4 = nn.Linear(in_features=128, out_features=32)
+        self.vfc2 = nn.Linear(in_features=512, out_features=128)
+
+        # self.vfc3 = nn.Linear(in_features=256, out_features=128)
+        # self.vfc4 = nn.Linear(in_features=128, out_features=32)
 
         self.afc1 = nn.Linear(in_features=128, out_features=128)
-        self.afc2 = nn.Linear(in_features=128, out_features=32)
-        self.afc3 = nn.Linear(in_features=128, out_features=32)
+        self.afc2 = nn.Linear(in_features=128, out_features=128)
+        # self.afc3 = nn.Linear(in_features=128, out_features=32)
+
+        self.vafc1 = nn.Linear(in_features=128, out_features=128)
+        self.vafc2 = nn.Linear(in_features=128, out_features=64)
 
     def init_params(self):
         for m in self.modules():
@@ -143,31 +147,38 @@ class VAMetric_ang(nn.Module):
         afeat = self.afc2(afeat)
         afeat = F.tanh(afeat)
 
+        vfeat = self.vafc1(vfeat)
+        vfeat = self.vafc2(vfeat)
+        afeat = self.vafc1(afeat)
+        afeat = self.vafc2(afeat)
+
         return vfeat, afeat
 
 
-def N_pair_loss(vfeat, afeat, u=0.1):
-    # u is the parameter for regularization loss constant
+class N_pair_loss(torch.nn.Module):
+    def __init__(self):
+        super(N_pair_loss, self).__init__()
 
-    bn = vfeat.size()[0]
-    vfeat = F.normalize(vfeat, p=2, dim=2)
-    vfeat = torch.div(vfeat, 120)
-    afeat = F.normalize(afeat, p=2, dim=2)
-    afeat = torch.div(afeat, 120)
+    def forward(self, vfeat, afeat, u=0.1):
+        # u is the parameter for regularization loss constant
+        bn = vfeat.size()[0]
+        vfeat = F.normalize(vfeat, p=2, dim=2)
+        vfeat = torch.div(vfeat, 120)
+        afeat = F.normalize(afeat, p=2, dim=2)
+        afeat = torch.div(afeat, 120)
 
-    vfeat = vfeat.view(64, -1)
-    afeat = afeat.view(64, -1)
+        vfeat = vfeat.view(64, -1)
+        afeat = afeat.view(64, -1)
 
-    S = torch.mm(vfeat, torch.t(afeat))
-    S = torch.exp(S)
-    S_sum_1 = torch.sum(S, 0)
-    S_sum_2 = torch.sum(S, 1)
-    diag = torch.diag(S)
+        S = torch.mm(vfeat, torch.t(afeat))
+        S = torch.exp(S)
+        S_sum_1 = torch.sum(S, 0)
+        S_sum_2 = torch.sum(S, 1)
+        diag = torch.diag(S)
 
-    loss_v = (-1) * torch.sum(torch.log(torch.div(diag, S_sum_1))) / bn
-    loss_a = (-1) * torch.sum(torch.log(torch.div(diag, S_sum_2))) / bn
-    loss_reg = (u / (2 * bn)) * (torch.sum(torch.norm(vfeat, p=2, dim=1)) + torch.sum(torch.norm(vfeat, p=2, dim=1)))
+        loss_v = (-1) * torch.sum(torch.log(torch.div(diag, S_sum_1))) / bn
+        loss_a = (-1) * torch.sum(torch.log(torch.div(diag, S_sum_2))) / bn
+        loss_reg = (u / (2 * bn)) * (
+            torch.sum(torch.norm(vfeat, p=2, dim=1)) + torch.sum(torch.norm(vfeat, p=2, dim=1)))
 
-    return loss_a + loss_v + loss_reg
-
-    pass
+        return loss_a + loss_v + loss_reg
