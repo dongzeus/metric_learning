@@ -165,9 +165,9 @@ def N_pair_loss(vfeat, afeat, u=0.1):
     diag = torch.diag(S)
 
     loss_v = (-1) * torch.sum(torch.log(torch.div(diag, S_sum_1))) / bn
-    # loss_a = (-1) * torch.sum(torch.log(torch.div(diag, S_sum_2))) / bn
+    loss_a = (-1) * torch.sum(torch.log(torch.div(diag, S_sum_2))) / bn
     loss_reg = (u / (2 * bn)) * (torch.sum(torch.norm(vfeat, p=2, dim=1)) + torch.sum(torch.norm(vfeat, p=2, dim=1)))
 
-    return loss_v + loss_reg
+    return loss_a + loss_v + loss_reg
 
     pass
