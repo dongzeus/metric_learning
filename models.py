@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 
 
-# test for git
+# test for git metric learning
 
 class FeatAggregate(nn.Module):
     def __init__(self, input_size=1024, hidden_size=128, out_size=128):
