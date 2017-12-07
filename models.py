@@ -148,9 +148,13 @@ class VAMetric_ang(nn.Module):
         afeat = F.tanh(afeat)
 
         vfeat = self.vafc1(vfeat)
+        vfeat = F.tanh(vfeat)
         vfeat = self.vafc2(vfeat)
+        vfeat = F.tanh(vfeat)
         afeat = self.vafc1(afeat)
+        afeat = F.tanh(afeat)
         afeat = self.vafc2(afeat)
+        afeat = F.tanh(afeat)
 
         return vfeat, afeat
 
