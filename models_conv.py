@@ -206,9 +206,9 @@ class N_pair_loss(torch.nn.Module):
 
             Dij = dis[i,i]
 
-            Dik = dis[i,:]
+            Dik = dis[i,:].clone()
             Dik[i] = 0
-            Djk = dis[:,i]
+            Djk = dis[:,i].clone()
             Djk[i] = 0
 
             loss_i = torch.log(torch.sum(torch.exp(margin * torch.ones(Dik.size()) - Dik) + torch.exp(
