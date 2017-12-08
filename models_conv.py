@@ -63,13 +63,13 @@ class VAMetric_LSTM(nn.Module):
 
     def forward(self, vfeat, afeat):
 
-        vfeat = self.VFeatPool(vfeat)
+        vfeat_all = self.VFeatPool(vfeat)
         afeat = self.AFeatPool(afeat)
 
-        bz = vfeat.size()[0]
+        bz = vfeat_all.size()[0]
         for k in np.arange(bz):
-            cur_vfeat = vfeat[k].clone()
-            cur_vfeats = cur_vfeat.repeat(bz, 1, 1)
+            cur_vfeat = vfeat_all[k].clone()
+            vfeat = cur_vfeat.repeat(bz, 1, 1)
 
             ### go through the conv part
             vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)

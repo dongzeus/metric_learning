@@ -95,7 +95,7 @@ def test(video_loader, audio_loader, model, opt):
                     #     simmat = cur_sim.clone()
                     # else:
                     #     simmat = torch.cat((simmat, cur_sim), 1)
-            sorted, indices = torch.sort(simmat, dim=0)
+            sorted, indices = torch.sort(simmat, dim=1)
             np_indices = indices.cpu().data.numpy()
             topk = np_indices[:, 0:opt.topk]
             right = 0
