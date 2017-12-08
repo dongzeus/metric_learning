@@ -97,6 +97,8 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_load
 
         loss1 = criterion(dis)  # compute contrastive loss
         reg_loss = Variable(torch.FloatTensor([0]))
+        if opt.cuda:
+            reg_loss = reg_loss.cuda()
         for param in model.parameters():
             reg_loss = reg_loss + torch.norm(param,p=2)
 
