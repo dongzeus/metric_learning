@@ -3,7 +3,11 @@ ngpu: 1
 gpu_id: '0'
 data_dir: ../Train       # replace it as your data path
 flist: './filelists/train_filelist.txt'
+<<<<<<< HEAD
 workers: 8
+=======
+workers: 4
+>>>>>>> 55442142bd5879cf316f80c3215fbcb8bc52d89d
 batchSize: 64
 manualSeed: 
 adam: True
