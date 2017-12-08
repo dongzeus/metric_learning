@@ -11,7 +11,7 @@ import torch
 import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 
-import models
+import models_conv
 from dataset import VideoFeatDataset as dset
 from tools.config_tools import Config
 from tools import utils
@@ -84,7 +84,7 @@ def test(video_loader, audio_loader, model, opt):
                     simmat = cur_sim.clone()
                 else:
                     simmat = torch.cat((simmat, cur_sim), 1)
-            sorted, indices = torch.sort(simmat, 0, descending=True)
+            sorted, indices = torch.sort(simmat, 0)
             np_indices = indices.cpu().data.numpy()
             topk = np_indices[:opt.topk, :]
             for k in np.arange(bz):
@@ -104,7 +104,7 @@ def main():
                                                     shuffle=False, num_workers=int(opt.workers))
 
     # create model
-    model = models.VAMetric_conv()
+    model = models_conv.VAMetric_conv()
 
     if opt.init_model != '':
         print('loading pretrained model from {0}'.format(opt.init_model))

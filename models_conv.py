@@ -140,8 +140,8 @@ class VAMetric_conv(nn.Module):
         vfeat = self.vfc2(vfeat)
         vfeat = F.relu(vfeat)
 
-       # vfeat = self.bn(vfeat)
-       # afeat = self.bn(afeat)
+        # vfeat = self.bn(vfeat)
+        # afeat = self.bn(afeat)
 
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
         afeat = afeat.view(afeat.size(0), 1, 1, -1)
@@ -173,8 +173,8 @@ class VAMetric_conv(nn.Module):
 
         # vafeat = 1.2 * F.tanh(vafeat)
 
-        #return result, torch.mean(result[0:result.size(0) / 2 - 1], 0), torch.mean(
-         #   result[result.size(0) / 2:vafeat.size(0) - 1], 0)
+        # return result, torch.mean(result[0:result.size(0) / 2 - 1], 0), torch.mean(
+        #   result[result.size(0) / 2:vafeat.size(0) - 1], 0)
 
 
 # only to test the git hub
@@ -204,16 +204,16 @@ class N_pair_loss(torch.nn.Module):
         loss = 0
         for i in range(bn):
 
-            Dij = dis[i,i]
+            Dij = dis[i, i]
 
-            Dik = dis[i,:].clone()
+            Dik = dis[i, :].clone()
             Dik[i] = 0
-            Djk = dis[:,i].clone()
+            Djk = dis[:, i].clone()
             Djk[i] = 0
 
-
-            loss_i = torch.log(torch.sum(torch.exp(margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda() - Dik) + torch.exp(
-                margin * torch.autograd.Variable(torch.ones(Djk.size())).cuda() - Djk), dim=0)) + Dij
+            loss_i = torch.log(
+                torch.sum(torch.exp(margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda() - Dik) + torch.exp(
+                    margin * torch.autograd.Variable(torch.ones(Djk.size())).cuda() - Djk), dim=0)) + Dij
             if torch.norm(loss_i, p=1).data[0] < 0:
                 continue
             else:
