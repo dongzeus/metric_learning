@@ -87,22 +87,14 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_load
     for i, (vfeat, afeat) in enumerate(train_loader):
         # shuffling the index orders
         bz = vfeat.size()[0]
-        for k in np.arange(bz):
-            cur_vfeat = vfeat[k].clone()
-            cur_vfeats = cur_vfeat.repeat(bz, 1, 1)
+        vfeat = Variable(vfeat)
+        afeat = Variable(afeat)
+        if opt.cuda:
+            vfeat = vfeat.cuda()
+            afeat = afeat.cuda()
 
-            vfeat_var = Variable(cur_vfeats)
-            afeat_var = Variable(afeat)
+        dis = model(vfeat,afeat)
 
-            if opt.cuda:
-                vfeat_var = vfeat_var.cuda()
-                afeat_var = afeat_var.cuda()
-            dis_k = model(vfeat_var, afeat_var)  # inference simialrity
-            dis_k = dis_k.view(1, -1)
-            if k == 0:
-                dis = dis_k
-            else:
-                dis = torch.cat((dis, dis_k), dim=0)
         loss = criterion(dis)  # compute contrastive loss
 
         #

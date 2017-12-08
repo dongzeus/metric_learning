@@ -64,22 +64,28 @@ def test(video_loader, audio_loader, model, opt):
 
             # shuffling the index orders
             bz = vfeat.size()[0]
-            for k in np.arange(bz):
-                cur_vfeat = vfeat[k].clone()
-                cur_vfeats = cur_vfeat.repeat(bz, 1, 1)
-
-                vfeat_var = Variable(cur_vfeats)
-                afeat_var = Variable(afeat)
-
-                if opt.cuda:
-                    vfeat_var = vfeat_var.cuda()
-                    afeat_var = afeat_var.cuda()
-                cur_sim = model(vfeat_var, afeat_var)
-                cur_sim = cur_sim.view(1, -1)
-                if k == 0:
-                    simmat = cur_sim.clone()
-                else:
-                    simmat = torch.cat((simmat, cur_sim), dim=0)
+            vfeat = Variable(vfeat)
+            afeat = Variable(afeat)
+            if opt.cuda:
+                vfeat = vfeat.cuda()
+                afeat = afeat.cuda()
+            simmat = model(vfeat,afeat)
+            # for k in np.arange(bz):
+            #     cur_vfeat = vfeat[k].clone()
+            #     cur_vfeats = cur_vfeat.repeat(bz, 1, 1)
+            #
+            #     vfeat_var = Variable(cur_vfeats)
+            #     afeat_var = Variable(afeat)
+            #
+            #     if opt.cuda:
+            #         vfeat_var = vfeat_var.cuda()
+            #         afeat_var = afeat_var.cuda()
+            #     cur_sim = model(vfeat_var, afeat_var)
+            #     cur_sim = cur_sim.view(1, -1)
+            #     if k == 0:
+            #         simmat = cur_sim.clone()
+            #     else:
+            #         simmat = torch.cat((simmat, cur_sim), dim=0)
 
                     # cur_sim_np = cur_sim.cpu().data.numpy()
                     # cur_sim_np = np.reshape(cur_sim_np, (30, 1))
@@ -89,7 +95,7 @@ def test(video_loader, audio_loader, model, opt):
                     #     simmat = cur_sim.clone()
                     # else:
                     #     simmat = torch.cat((simmat, cur_sim), 1)
-            sorted, indices = torch.sort(simmat, dim=1)
+            sorted, indices = torch.sort(simmat, dim=0)
             np_indices = indices.cpu().data.numpy()
             topk = np_indices[:, 0:opt.topk]
             right = 0
