@@ -15,6 +15,7 @@ from torch.autograd import Variable
 from torch.optim.lr_scheduler import LambdaLR as LR_Policy
 
 import models_conv
+import evaluate_conv
 from dataset import VideoFeatDataset
 from tools.config_tools import Config
 from tools import utils
@@ -67,7 +68,7 @@ print('Random Seed: {0}'.format(opt.manualSeed))
 
 
 # training function for metric learning
-def train(train_loader, model, criterion, optimizer, epoch, opt):
+def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_loader, test_audio_loader, opts_test):
     """
     train for one epoch on the training set
     """
@@ -97,13 +98,12 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
                 vfeat_var = vfeat_var.cuda()
                 afeat_var = afeat_var.cuda()
             dis_k = model(vfeat_var, afeat_var)  # inference simialrity
-            dis_k = dis_k.view(1,-1)
+            dis_k = dis_k.view(1, -1)
             if k == 0:
                 dis = dis_k
             else:
-                dis = torch.cat((dis,dis_k),dim=0)
+                dis = torch.cat((dis, dis_k), dim=0)
         loss = criterion(dis)  # compute contrastive loss
-
 
         #
         # bz = vfeat.size()[0]
@@ -155,8 +155,8 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
 
 
         # record the loss and distance to plot later
-        #dis1_rec.append(list(dis1.data)[0])
-        #dis2_rec.append(list(dis2.data)[0])
+        # dis1_rec.append(list(dis1.data)[0])
+        # dis2_rec.append(list(dis2.data)[0])
         loss_rec.append(list(loss.data)[0])
 
         ##############################
@@ -181,10 +181,12 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
+
         if i % opt.print_freq == 0:
             log_str = 'Epoch: [{0}][{1}/{2}]\t Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
                 epoch, i, len(train_loader), batch_time=batch_time, loss=losses)
             print(log_str)
+            evaluate_conv.test(test_video_loader, test_audio_loader, model, opts_test)
 
 
 def main():
@@ -229,12 +231,31 @@ def main():
     loss_rec = []
     dis1_rec = []
     dis2_rec = []
-# another test for git
+
+    ######## for test each epoch
+    parser = OptionParser()
+    parser.add_option('--config',
+                      type=str,
+                      help="evaluation configuration",
+                      default="./configs/test_config.yaml")
+
+    (opts_test, args) = parser.parse_args()
+    opts_test = Config(opts_test.config)
+    test_video_dataset = VideoFeatDataset(opts_test.data_dir, opts_test.video_flist, which_feat='vfeat')
+    test_audio_dataset = VideoFeatDataset(opts_test.data_dir, opts_test.audio_flist, which_feat='afeat')
+    test_video_loader = torch.utils.data.DataLoader(test_video_dataset, batch_size=opts_test.batchSize,
+                                                    shuffle=False, num_workers=int(opts_test.workers))
+    test_audio_loader = torch.utils.data.DataLoader(test_audio_dataset, batch_size=opts_test.batchSize,
+                                                    shuffle=False, num_workers=int(opts_test.workers))
+
+    ########
+
+
     for epoch in range(resume_epoch, opt.max_epochs):
         #################################
         # train for one epoch
         #################################
-        train(train_loader, model, criterion, optimizer, epoch, opt)
+        train(train_loader, model, criterion, optimizer, epoch, opt, test_video_loader, test_audio_loader, opts_test)
         scheduler.step()
 
         ##################################

@@ -75,23 +75,28 @@ def test(video_loader, audio_loader, model, opt):
                     vfeat_var = vfeat_var.cuda()
                     afeat_var = afeat_var.cuda()
                 cur_sim = model(vfeat_var, afeat_var)
-                cur_sim = cur_sim[:, 0]
-                cur_sim_np = cur_sim.cpu().data.numpy()
-                cur_sim_np = np.reshape(cur_sim_np, (30, 1))
-                cur_sim = torch.from_numpy(cur_sim_np)
-                cur_sim = torch.autograd.Variable(cur_sim)
+                cur_sim = cur_sim.view(1, -1)
                 if k == 0:
                     simmat = cur_sim.clone()
                 else:
-                    simmat = torch.cat((simmat, cur_sim), 1)
-            sorted, indices = torch.sort(simmat, 0)
+                    simmat = torch.cat((simmat, cur_sim), dim=0)
+
+                    # cur_sim_np = cur_sim.cpu().data.numpy()
+                    # cur_sim_np = np.reshape(cur_sim_np, (30, 1))
+                    # cur_sim = torch.from_numpy(cur_sim_np)
+                    # cur_sim = torch.autograd.Variable(cur_sim)
+                    # if k == 0:
+                    #     simmat = cur_sim.clone()
+                    # else:
+                    #     simmat = torch.cat((simmat, cur_sim), 1)
+            sorted, indices = torch.sort(simmat, dim=1)
             np_indices = indices.cpu().data.numpy()
-            topk = np_indices[:opt.topk, :]
+            topk = np_indices[:, 0:opt.topk]
             for k in np.arange(bz):
-                order = topk[:, k]
+                order = topk[k,:]
                 if k in order:
                     right = right + 1
-            print('The similarity matrix: \n {}'.format(simmat))
+            #print('The similarity matrix: \n {}'.format(simmat))
             print('Testing accuracy (top{}): {:.3f}'.format(opt.topk, right / bz))
 
 
