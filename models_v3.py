@@ -45,8 +45,8 @@ class VAMetric_conv(nn.Module):
     def __init__(self, framenum=120):
         super(VAMetric_conv, self).__init__()
 
-        self.aLSTM = FeatLSTM(1024,512,128)
-        self.vLSTM = FeatLSTM(128,128,128)
+        self.vLSTM = FeatLSTM(1024,512,128)
+        self.aLSTM = FeatLSTM(128,128,128)
 
         self.vfc1 = nn.Linear(in_features=1024, out_features=512)
         self.vfc2 = nn.Linear(in_features=512, out_features=128)
