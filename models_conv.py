@@ -54,7 +54,7 @@ class VAMetric_LSTM(nn.Module):
         self.fc3 = nn.Linear(in_features=64 * 113, out_features=1024)
         self.fc4 = nn.Linear(in_features=1024, out_features=512)
         self.fc5 = nn.Linear(in_features=512, out_features=128)
-        self.fc6 = nn.Linear(in_features=128, out_features=1)
+        self.fc6 = nn.Linear(in_features=128, out_features=2)
         self.init_params()
 
     def init_params(self):
@@ -63,10 +63,33 @@ class VAMetric_LSTM(nn.Module):
                 nn.init.xavier_uniform(m.weight)
                 nn.init.constant(m.bias, 0)
 
-    def forward(self, vfeat, afeat):
+    def forward(self, vfeat, afeat,mode=0):
 
         vfeat_all = self.VFeatPool(vfeat)
         afeat = self.AFeatPool(afeat)
+
+
+        if mode == 1:
+            vfeat = vfeat_all
+
+            vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
+            afeat = afeat.view(afeat.size(0), 1, 1, -1)
+            vafeat = torch.cat((vfeat, afeat), dim=2)
+            vafeat = self.conv1(vafeat)
+            vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
+            vafeat = self.conv2(vafeat)
+            vafeat = vafeat.view([vafeat.size(0), -1])
+            vafeat = self.fc3(vafeat)
+            vafeat = F.relu(vafeat)
+            vafeat = self.fc4(vafeat)
+            vafeat = F.relu(vafeat)
+            vafeat = self.fc5(vafeat)
+            vafeat = F.relu(vafeat)
+            vafeat = self.fc6(vafeat)
+            result = F.softmax(vafeat)
+
+            return result, torch.mean(result[0:result.size(0) / 2 - 1], 0), torch.mean(
+            result[result.size(0) / 2:vafeat.size(0) - 1], 0)
 
         bz = vfeat_all.size()[0]
         for k in np.arange(bz):
@@ -77,10 +100,13 @@ class VAMetric_LSTM(nn.Module):
             vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
             afeat = afeat.view(afeat.size(0), 1, 1, -1)
 
+            vfeat = self.dp(vfeat)
+            afeat = self.dp(afeat)
 
             vafeat = torch.cat((vfeat, afeat), dim=2)
             vafeat = self.conv1(vafeat)
             vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
+            vafeat = self.dp(vafeat)
             vafeat = self.conv2(vafeat)
 
 
@@ -248,7 +274,7 @@ class N_pair_loss(torch.nn.Module):
             Dik[i] = 0
             Djk = dis[:, i].clone()
             Djk[i] = 0
-            margin = margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda()
+            margin = margin * torch.autograd.Variable(torch.ones(Dik.size()))
             loss_i = torch.log(torch.sum(torch.exp(margin - Dik) + torch.exp(margin - Djk), dim=0)) + Dij
             if torch.norm(loss_i, p=1).data[0] < 0:
                 continue

@@ -14,8 +14,8 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import LambdaLR as LR_Policy
 
-import models_conv
-import evaluate_conv
+import models_v3 as models
+import evaluate_v3 as evaluate
 from dataset import VideoFeatDataset
 from tools.config_tools import Config
 from tools import utils
@@ -68,7 +68,7 @@ print('Random Seed: {0}'.format(opt.manualSeed))
 
 
 # training function for metric learning
-def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_loader, test_audio_loader, opts_test):
+def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loader, test_audio_loader, opts_test):
     """
     train for one epoch on the training set
     """
@@ -86,19 +86,6 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_load
 
     for i, (vfeat, afeat) in enumerate(train_loader):
         # shuffling the index orders
-        '''
-        bz = vfeat.size()[0]
-        vfeat = Variable(vfeat)
-        afeat = Variable(afeat)
-        if opt.cuda:
-            vfeat = vfeat.cuda()
-            afeat = afeat.cuda()
-
-        dis = model(vfeat,afeat)
-
-        loss = criterion(dis)  
-        '''
-
         bz = vfeat.size()[0]
         orders = np.arange(bz).astype('int32')
         shuffle_orders = orders.copy()
@@ -142,7 +129,7 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_load
             target_var = target_var.cuda()
 
         # forward, backward optimize
-        sim, dis1, dis2 = model(vfeat_var, afeat_var,1)  # inference simialrity
+        sim, dis1, dis2 = model(vfeat_var, afeat_var)  # inference simialrity
         loss = criterion(sim, target_var)  # compute contrastive loss
 
         # record the loss and distance to plot later
@@ -153,7 +140,7 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_load
         ##############################
         # update loss in the loss meter
         ##############################
-        losses.update(loss.data[0], vfeat.size(0))
+        losses.update(loss.data[0], vfeat0.size(0))
 
         ##############################
         # compute gradient and do sgd
@@ -172,12 +159,12 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_load
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
-
         if i % opt.print_freq == 0:
             log_str = 'Epoch: [{0}][{1}/{2}]\t Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
                 epoch, i, len(train_loader), batch_time=batch_time, loss=losses)
             print(log_str)
-            evaluate_conv.test(test_video_loader, test_audio_loader, model, opts_test)
+            evaluate.test(test_video_loader, test_audio_loader, model, opts_test)
+
 
 
 def main():
@@ -187,14 +174,14 @@ def main():
                                                shuffle=True, num_workers=int(opt.workers))
 
     # create model
-    model = models_conv.VAMetric_LSTM()
+    model = models.VAMetric_conv()
 
     if opt.init_model != '':
         print('loading pretrained model from {0}'.format(opt.init_model))
         model.load_state_dict(torch.load(opt.init_model))
 
     # Contrastive Loss
-    criterion = models_conv.conv_loss_dqy()
+    criterion = models.conv_loss_dqy()
 
     if opt.cuda:
         print('shift model and criterion to GPU .. ')
@@ -223,7 +210,7 @@ def main():
     dis1_rec = []
     dis2_rec = []
 
-    ######## for test each epoch
+    ######### to test each epoch
     parser = OptionParser()
     parser.add_option('--config',
                       type=str,
@@ -241,12 +228,12 @@ def main():
 
     ########
 
-
+# another test for git
     for epoch in range(resume_epoch, opt.max_epochs):
         #################################
         # train for one epoch
         #################################
-        train(train_loader, model, criterion, optimizer, epoch, opt, test_video_loader, test_audio_loader, opts_test)
+        train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loader, test_audio_loader, opts_test)
         scheduler.step()
 
         ##################################

@@ -11,7 +11,7 @@ import torch
 import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 
-import models_conv
+import models_v3 as models
 from dataset import VideoFeatDataset as dset
 from tools.config_tools import Config
 from tools import utils
@@ -63,15 +63,6 @@ def test(video_loader, audio_loader, model, opt):
             # afeat = afeat.transpose(2,1)
 
             # shuffling the index orders
-            '''
-            bz = vfeat.size()[0]
-            vfeat = Variable(vfeat)
-            afeat = Variable(afeat)
-            if opt.cuda:
-                vfeat = vfeat.cuda()
-                afeat = afeat.cuda()
-            simmat = model(vfeat,afeat)
-            '''
             bz = vfeat.size()[0]
             for k in np.arange(bz):
                 cur_vfeat = vfeat[k].clone()
@@ -83,20 +74,21 @@ def test(video_loader, audio_loader, model, opt):
                 if opt.cuda:
                     vfeat_var = vfeat_var.cuda()
                     afeat_var = afeat_var.cuda()
-                cur_sim,dis1,dis2 = model(vfeat_var, afeat_var,1)
-                cur_sim = cur_sim[:,0]
-                cur_sim = cur_sim.resize(1,50)
+                cur_sim, dis1, dis2 = model(vfeat_var, afeat_var)
+                cur_sim = cur_sim[:, 0]
+                cur_sim_np = cur_sim.cpu().data.numpy()
+                cur_sim_np = np.reshape(cur_sim_np, (50, 1))
+                cur_sim = torch.from_numpy(cur_sim_np)
+                cur_sim = torch.autograd.Variable(cur_sim)
                 if k == 0:
                     simmat = cur_sim.clone()
                 else:
-                    simmat = torch.cat((simmat, cur_sim), dim=0)
-
-            sorted, indices = torch.sort(simmat, dim=1, descending=True)
+                    simmat = torch.cat((simmat, cur_sim), 1)
+            sorted, indices = torch.sort(simmat, 0, descending=True)
             np_indices = indices.cpu().data.numpy()
-            topk = np_indices[:, 0:opt.topk]
-            right = 0
+            topk = np_indices[:opt.topk, :]
             for k in np.arange(bz):
-                order = topk[k,:]
+                order = topk[:, k]
                 if k in order:
                     right = right + 1
             #print('The similarity matrix: \n {}'.format(simmat))
@@ -112,7 +104,7 @@ def main():
                                                     shuffle=False, num_workers=int(opt.workers))
 
     # create model
-    model = models_conv.VAMetric_conv()
+    model = models.VAMetric_conv()
 
     if opt.init_model != '':
         print('loading pretrained model from {0}'.format(opt.init_model))
