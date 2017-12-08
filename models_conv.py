@@ -212,8 +212,8 @@ class N_pair_loss(torch.nn.Module):
             Djk[i] = 0
 
             loss_i = torch.log(
-                torch.sum(torch.exp(margin * torch.autograd.Variable(torch.ones(Dik.size())) - Dik) + torch.exp(
-                    margin * torch.autograd.Variable(torch.ones(Djk.size())) - Djk), dim=0)) + Dij*bn
+                torch.sum(torch.exp(margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda() - Dik) + torch.exp(
+                    margin * torch.autograd.Variable(torch.ones(Djk.size())).cuda() - Djk), dim=0)) + Dij*bn
             if torch.norm(loss_i, p=1).data[0] < 0:
                 continue
             else:
