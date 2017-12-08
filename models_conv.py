@@ -196,7 +196,7 @@ class N_pair_loss(torch.nn.Module):
     def __init__(self):
         super(N_pair_loss, self).__init__()
 
-    def forward(self, dis, u=0.1, margin=1):
+    def forward(self, dis, u=0.1, margin=5):
         # u is the parameter for regularization loss constant
 
         bn = dis.size()[0]
@@ -213,7 +213,7 @@ class N_pair_loss(torch.nn.Module):
 
             loss_i = torch.log(
                 torch.sum(torch.exp(margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda() - Dik) + torch.exp(
-                    margin * torch.autograd.Variable(torch.ones(Djk.size())).cuda() - Djk), dim=0)) + Dij*bn
+                    margin * torch.autograd.Variable(torch.ones(Djk.size())).cuda() - Djk), dim=0)) + Dij*3
             if torch.norm(loss_i, p=1).data[0] < 0:
                 continue
             else:
