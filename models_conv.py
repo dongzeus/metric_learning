@@ -46,10 +46,12 @@ class VAMetric_LSTM(nn.Module):
         super(VAMetric_LSTM, self).__init__()
         self.VFeatPool = FeatLSTM(1024, 512, 128)
         self.AFeatPool = FeatLSTM(128, 128, 128)
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)
+
+        self.dp = nn.Dropout(p=0.5)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=(2, 128), stride=128)
         # self.mp = nn.MaxPool1d(kernel_size=4)
-        self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)
-        self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
+        self.conv2 = nn.Conv1d(in_channels=64, out_channels=64, kernel_size=8, stride=1)
+        self.fc3 = nn.Linear(in_features=64 * 113, out_features=1024)
         self.fc4 = nn.Linear(in_features=1024, out_features=512)
         self.fc5 = nn.Linear(in_features=512, out_features=128)
         self.fc6 = nn.Linear(in_features=128, out_features=1)
@@ -75,11 +77,15 @@ class VAMetric_LSTM(nn.Module):
             vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
             afeat = afeat.view(afeat.size(0), 1, 1, -1)
 
+            vfeat = self.dp(vfeat)
+            afeat = self.dp(vfeat)
+
             vafeat = torch.cat((vfeat, afeat), dim=2)
             vafeat = self.conv1(vafeat)
             vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
+            vafeat = self.dp(vafeat)
             vafeat = self.conv2(vafeat)
-            # vafeat = self.mp(vafeat)
+
 
             vafeat = vafeat.view([vafeat.size(0), -1])
             vafeat = self.fc3(vafeat)
@@ -245,7 +251,7 @@ class N_pair_loss(torch.nn.Module):
             Dik[i] = 0
             Djk = dis[:, i].clone()
             Djk[i] = 0
-            margin = margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda()
+            margin = margin * torch.autograd.Variable(torch.ones(Dik.size()))
             loss_i = torch.log(torch.sum(torch.exp(margin - Dik) + torch.exp(margin - Djk), dim=0)) + Dij
             if torch.norm(loss_i, p=1).data[0] < 0:
                 continue
