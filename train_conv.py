@@ -97,6 +97,7 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
                 vfeat_var = vfeat_var.cuda()
                 afeat_var = afeat_var.cuda()
             dis_k = model(vfeat_var, afeat_var)  # inference simialrity
+            dis_k = dis_k.view(1,-1)
             if k == 0:
                 dis = dis_k
             else:
