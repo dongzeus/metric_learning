@@ -116,7 +116,6 @@ class VAMetric_ang(nn.Module):
         super(VAMetric_ang, self).__init__()
         self.vfc1 = nn.Linear(in_features=1024, out_features=512)
         self.vfc2 = nn.Linear(in_features=512, out_features=128)
-
         # self.vfc3 = nn.Linear(in_features=256, out_features=128)
         # self.vfc4 = nn.Linear(in_features=128, out_features=32)
 
@@ -124,8 +123,8 @@ class VAMetric_ang(nn.Module):
         self.afc2 = nn.Linear(in_features=128, out_features=128)
         # self.afc3 = nn.Linear(in_features=128, out_features=32)
 
-        self.vafc1 = nn.Linear(in_features=128, out_features=128)
-        self.vafc2 = nn.Linear(in_features=128, out_features=64)
+        self.vafc1 = nn.Linear(in_features=128, out_features=64)
+        #self.vafc2 = nn.Linear(in_features=128, out_features=64)
 
     def init_params(self):
         for m in self.modules():
@@ -149,12 +148,12 @@ class VAMetric_ang(nn.Module):
 
         vfeat = self.vafc1(vfeat)
         vfeat = F.tanh(vfeat)
-        vfeat = self.vafc2(vfeat)
-        vfeat = F.tanh(vfeat)
+        #vfeat = self.vafc2(vfeat)
+        #vfeat = F.tanh(vfeat)
         afeat = self.vafc1(afeat)
         afeat = F.tanh(afeat)
-        afeat = self.vafc2(afeat)
-        afeat = F.tanh(afeat)
+        #afeat = self.vafc2(afeat)
+        #afeat = F.tanh(afeat)
 
         return vfeat, afeat
 
@@ -182,9 +181,9 @@ class N_pair_loss(torch.nn.Module):
             Dij = torch.norm((v - a), p=2, dim=0)
 
             Dik = torch.norm((v.expand(64, v.size()[0]) - afeat), p=2, dim=1)
-            Dik[i]=0
+            Dik[i] = 0
             Djk = torch.norm((a.expand(64, v.size()[0]) - vfeat), p=2, dim=1)
-            Djk[i]=0
+            Djk[i] = 0
 
             loss_i = torch.log(torch.sum(torch.exp(margin * torch.ones(Dik.size()) - Dik) + torch.exp(
                 margin * torch.ones(Djk.size()) - Djk), dim=0)) + Dij
@@ -193,7 +192,7 @@ class N_pair_loss(torch.nn.Module):
             else:
                 loss_i = torch.pow(loss_i, 2)
                 loss_ls = loss_ls + loss_i
-        loss_ls = loss_ls/(2*bn)
+        loss_ls = loss_ls / (2 * bn)
 
         # S = torch.mm(vfeat, torch.t(afeat))
         # S = torch.exp(S)
