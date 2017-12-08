@@ -5,11 +5,8 @@ data_dir: ../Train     # Your dataset path
 video_flist: './filelists/Video_Name_List.txt'
 audio_flist: './filelists/Audio_Name_List.txt'
 workers: 4
-<<<<<<< HEAD
 batchSize: 70
-=======
 batchSize: 50
->>>>>>> 089a2a51c1f6abbc0e6b3504c288f72c6172cb50
 checkpoint_folder: ./checkpoints
 init_model: './checkpoints/VA_METRIC_state_epoch35.pth'
 topk: 5
