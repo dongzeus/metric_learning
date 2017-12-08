@@ -62,28 +62,44 @@ class VAMetric_LSTM(nn.Module):
                 nn.init.constant(m.bias, 0)
 
     def forward(self, vfeat, afeat):
+
         vfeat = self.VFeatPool(vfeat)
         afeat = self.AFeatPool(afeat)
 
-        vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
-        afeat = afeat.view(afeat.size(0), 1, 1, -1)
+        bz = vfeat.size()[0]
+        for k in np.arange(bz):
+            cur_vfeat = vfeat[k].clone()
+            cur_vfeats = cur_vfeat.repeat(bz, 1, 1)
 
-        vafeat = torch.cat((vfeat, afeat), dim=2)
-        vafeat = self.conv1(vafeat)
-        vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
-        vafeat = self.conv2(vafeat)
-        # vafeat = self.mp(vafeat)
+            ### go through the conv part
+            vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
+            afeat = afeat.view(afeat.size(0), 1, 1, -1)
 
-        vafeat = vafeat.view([vafeat.size(0), -1])
-        vafeat = self.fc3(vafeat)
-        vafeat = F.relu(vafeat)
-        vafeat = self.fc4(vafeat)
-        vafeat = F.relu(vafeat)
-        vafeat = self.fc5(vafeat)
-        vafeat = F.relu(vafeat)
-        vafeat = self.fc6(vafeat)
+            vafeat = torch.cat((vfeat, afeat), dim=2)
+            vafeat = self.conv1(vafeat)
+            vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
+            vafeat = self.conv2(vafeat)
+            # vafeat = self.mp(vafeat)
 
-        return vafeat
+            vafeat = vafeat.view([vafeat.size(0), -1])
+            vafeat = self.fc3(vafeat)
+            vafeat = F.relu(vafeat)
+            vafeat = self.fc4(vafeat)
+            vafeat = F.relu(vafeat)
+            vafeat = self.fc5(vafeat)
+            vafeat = F.relu(vafeat)
+            vafeat = self.fc6(vafeat)
+            ### end of the part
+
+            dis_k = vafeat  # inference simialrity
+            dis_k = dis_k.view(1, -1)
+            if k == 0:
+                dis = dis_k
+            else:
+                dis = torch.cat((dis, dis_k), dim=0)
+
+        return dis
+
 
 
 # Visual-audio multimodal metric learning: MaxPool+FC
