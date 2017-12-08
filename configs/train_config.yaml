@@ -1,10 +1,10 @@
-cuda: False
+cuda: True
 ngpu: 1
 gpu_id: '0'
 data_dir: ../Train       # replace it as your data path
 flist: './filelists/train_filelist.txt'
 workers: 4
-batchSize: 128
+batchSize: 64
 manualSeed: 
 adam: True
 lr: 0.0001
@@ -14,7 +14,7 @@ momentum: 0.9
 weight_decay: 0.0001
 max_epochs: 200
 print_freq: 5
-epoch_save: 100
+epoch_save: 50
 checkpoint_folder: ./checkpoints
 prefix: 'VA_METRIC'
 model: ''

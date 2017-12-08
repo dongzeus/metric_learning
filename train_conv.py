@@ -200,7 +200,7 @@ def main():
         model.load_state_dict(torch.load(opt.init_model))
 
     # Contrastive Loss
-    criterion = models_conv.conv_loss_dqy()
+    criterion = models_conv.N_pair_loss()
 
     if opt.cuda:
         print('shift model and criterion to GPU .. ')
