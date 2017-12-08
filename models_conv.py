@@ -77,13 +77,10 @@ class VAMetric_LSTM(nn.Module):
             vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
             afeat = afeat.view(afeat.size(0), 1, 1, -1)
 
-            vfeat = self.dp(vfeat)
-            afeat = self.dp(afeat)
 
             vafeat = torch.cat((vfeat, afeat), dim=2)
             vafeat = self.conv1(vafeat)
             vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
-            vafeat = self.dp(vafeat)
             vafeat = self.conv2(vafeat)
 
 
