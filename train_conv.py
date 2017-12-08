@@ -196,7 +196,7 @@ def main():
                                                shuffle=True, num_workers=int(opt.workers))
 
     # create model
-    model = models_conv.VAMetric_conv()
+    model = models_conv.VAMetric_LSTM()
 
     if opt.init_model != '':
         print('loading pretrained model from {0}'.format(opt.init_model))
