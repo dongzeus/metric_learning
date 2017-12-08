@@ -7,13 +7,13 @@ import numpy as np
 
 # test for git
 
-class FeatAggregate(nn.Module):
+class FeatLSTM(nn.Module):
     def __init__(self, input_size=1024, hidden_size=128, out_size=128):
-        super(FeatAggregate, self).__init__()
+        super(FeatLSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.out_size = out_size
-        self.lstm1 = nn.LSTMCell(input_size, hidden_size, )
+        self.lstm1 = nn.LSTMCell(input_size, hidden_size)
         self.lstm2 = nn.LSTMCell(hidden_size, out_size)
 
     def forward(self, feats):
@@ -31,18 +31,28 @@ class FeatAggregate(nn.Module):
         for _, feat_t in enumerate(feats.chunk(feats.size(1), dim=1)):
             h_t, c_t = self.lstm1(feat_t[:, 0, :], (h_t, c_t))
             h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
+            if _ == 0:
+                stream = h_t2.view(h_t2.size(0),1,-1)
+            else:
+                stream = torch.cat((stream,h_t2.view(h_t2.size(0),1,-1)),dim=1)
         # aggregated feature
-        feat = h_t2
-        return feat
+
+        return stream
 
 
 # Visual-audio multimodal metric learning: LSTM*2+FC*2
-class VAMetric(nn.Module):
+class VAMetric_LSTM(nn.Module):
     def __init__(self):
-        super(VAMetric, self).__init__()
-        self.VFeatPool = FeatAggregate(1024, 512, 128)
-        self.AFeatPool = FeatAggregate(128, 128, 128)
-        self.fc = nn.Linear(128, 64)
+        super(VAMetric_LSTM, self).__init__()
+        self.VFeatPool = FeatLSTM(1024, 512, 128)
+        self.AFeatPool = FeatLSTM(128, 128, 128)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)
+        # self.mp = nn.MaxPool1d(kernel_size=4)
+        self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)
+        self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
+        self.fc4 = nn.Linear(in_features=1024, out_features=512)
+        self.fc5 = nn.Linear(in_features=512, out_features=128)
+        self.fc6 = nn.Linear(in_features=128, out_features=1)
         self.init_params()
 
     def init_params(self):
@@ -54,13 +64,26 @@ class VAMetric(nn.Module):
     def forward(self, vfeat, afeat):
         vfeat = self.VFeatPool(vfeat)
         afeat = self.AFeatPool(afeat)
-        vfeat = self.fc(vfeat)
-        afeat = self.fc(afeat)
 
-        distance = F.pairwise_distance(vfeat, afeat)
+        vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
+        afeat = afeat.view(afeat.size(0), 1, 1, -1)
 
-        return distance, torch.mean(distance[0:vfeat.size(0) / 2 - 1]), torch.mean(
-            distance[vfeat.size(0) / 2:vfeat.size(0) - 1])
+        vafeat = torch.cat((vfeat, afeat), dim=2)
+        vafeat = self.conv1(vafeat)
+        vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
+        vafeat = self.conv2(vafeat)
+        # vafeat = self.mp(vafeat)
+
+        vafeat = vafeat.view([vafeat.size(0), -1])
+        vafeat = self.fc3(vafeat)
+        vafeat = F.relu(vafeat)
+        vafeat = self.fc4(vafeat)
+        vafeat = F.relu(vafeat)
+        vafeat = self.fc5(vafeat)
+        vafeat = F.relu(vafeat)
+        vafeat = self.fc6(vafeat)
+
+        return vafeat
 
 
 # Visual-audio multimodal metric learning: MaxPool+FC
@@ -91,24 +114,6 @@ class VAMetric2(nn.Module):
         afeat = self.fc(afeat)
 
         return F.pairwise_distance(vfeat, afeat)
-
-
-class ContrastiveLoss(torch.nn.Module):
-    """
-    Contrastive loss function.
-    Based on: http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
-    """
-
-    def __init__(self, margin=1.0):
-        super(ContrastiveLoss, self).__init__()
-        self.margin = margin
-
-    def forward(self, dist, label):
-        length = len(dist)
-        loss = torch.mean((1 - label) * torch.pow(dist, 2) +
-                          (label) * torch.pow(torch.clamp(self.margin - dist, min=0.0), 2))
-        loss2 = 1 - torch.mean(torch.abs(dist[0:length / 2 - 1] - dist[length / 2:length - 1]))
-        return loss + loss2
 
 
 class VAMetric_conv(nn.Module):
@@ -176,8 +181,22 @@ class VAMetric_conv(nn.Module):
         # return result, torch.mean(result[0:result.size(0) / 2 - 1], 0), torch.mean(
         #   result[result.size(0) / 2:vafeat.size(0) - 1], 0)
 
+class ContrastiveLoss(torch.nn.Module):
+    """
+    Contrastive loss function.
+    Based on: http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
+    """
 
-# only to test the git hub
+    def __init__(self, margin=1.0):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, dist, label):
+        length = len(dist)
+        loss = torch.mean((1 - label) * torch.pow(dist, 2) +
+                          (label) * torch.pow(torch.clamp(self.margin - dist, min=0.0), 2))
+        loss2 = 1 - torch.mean(torch.abs(dist[0:length / 2 - 1] - dist[length / 2:length - 1]))
+        return loss + loss2
 
 class conv_loss_dqy(torch.nn.Module):
     def __init__(self):
@@ -196,7 +215,7 @@ class N_pair_loss(torch.nn.Module):
     def __init__(self):
         super(N_pair_loss, self).__init__()
 
-    def forward(self, dis, u=0.1, margin=5):
+    def forward(self, dis, u=0.1, margin=1):
         # u is the parameter for regularization loss constant
 
         bn = dis.size()[0]
@@ -210,10 +229,8 @@ class N_pair_loss(torch.nn.Module):
             Dik[i] = 0
             Djk = dis[:, i].clone()
             Djk[i] = 0
-
-            loss_i = torch.log(
-                torch.sum(torch.exp(margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda() - Dik) + torch.exp(
-                    margin * torch.autograd.Variable(torch.ones(Djk.size())).cuda() - Djk), dim=0)) + Dij
+            margin = margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda()
+            loss_i = torch.log(torch.sum(torch.exp(margin - Dik) + torch.exp(margin - Djk), dim=0)) + Dij
             if torch.norm(loss_i, p=1).data[0] < 0:
                 continue
             else:
