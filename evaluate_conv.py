@@ -92,6 +92,7 @@ def test(video_loader, audio_loader, model, opt):
             sorted, indices = torch.sort(simmat, dim=1)
             np_indices = indices.cpu().data.numpy()
             topk = np_indices[:, 0:opt.topk]
+            right = 0
             for k in np.arange(bz):
                 order = topk[k,:]
                 if k in order:
