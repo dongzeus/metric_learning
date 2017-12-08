@@ -14,7 +14,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import LambdaLR as LR_Policy
 
-import models
+import models_metric
 from dataset import VideoFeatDataset
 from tools.config_tools import Config
 from tools import utils
@@ -84,6 +84,7 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
     global loss_rec
 
     for i, (vfeat, afeat) in enumerate(train_loader):
+
         # shuffling the index orders
         # bz = vfeat.size()[0]
         # orders = np.arange(bz).astype('int32')
@@ -169,14 +170,14 @@ def main():
                                                shuffle=True, num_workers=int(opt.workers))
 
     # create model
-    model = models.VAMetric_ang()
+    model = models_metric.VAMetric_ang()
 
     if opt.init_model != '':
         print('loading pretrained model from {0}'.format(opt.init_model))
         model.load_state_dict(torch.load(opt.init_model))
 
     # Contrastive Loss
-    criterion = models.N_pair_loss()
+    criterion = models_metric.N_pair_loss()
 
     if opt.cuda:
         print('shift model and criterion to GPU .. ')

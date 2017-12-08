@@ -121,9 +121,9 @@ class VAMetric_conv(nn.Module):
         # self.mp = nn.MaxPool1d(kernel_size=4)
         self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)
         self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
-        self.fc4 = nn.Linear(in_features=1024, out_features=2)
+        self.fc4 = nn.Linear(in_features=1024, out_features=512)
         self.fc5 = nn.Linear(in_features=512, out_features=128)
-        self.fc6 = nn.Linear(in_features=128, out_features=2)
+        self.fc6 = nn.Linear(in_features=128, out_features=1)
         self.init_params()
 
     def init_params(self):
@@ -156,13 +156,15 @@ class VAMetric_conv(nn.Module):
         vafeat = self.fc3(vafeat)
         vafeat = F.relu(vafeat)
         vafeat = self.fc4(vafeat)
-       # vafeat = F.relu(vafeat)
-       # vafeat = self.fc5(vafeat)
-        #vafeat = F.relu(vafeat)
-        #vafeat = self.fc6(vafeat)
+        vafeat = F.relu(vafeat)
+        vafeat = self.fc5(vafeat)
+        vafeat = F.relu(vafeat)
+        vafeat = self.fc6(vafeat)
+
+        return vafeat
 
 
-        result = F.softmax(vafeat)
+
 
         # vafeat = F.relu(vafeat)
         # vafeat = self.fc5(vafeat)
@@ -171,8 +173,8 @@ class VAMetric_conv(nn.Module):
 
         # vafeat = 1.2 * F.tanh(vafeat)
 
-        return result, torch.mean(result[0:result.size(0) / 2 - 1], 0), torch.mean(
-            result[result.size(0) / 2:vafeat.size(0) - 1], 0)
+        #return result, torch.mean(result[0:result.size(0) / 2 - 1], 0), torch.mean(
+         #   result[result.size(0) / 2:vafeat.size(0) - 1], 0)
 
 
 # only to test the git hub
@@ -188,3 +190,44 @@ class conv_loss_dqy(torch.nn.Module):
         # loss3 = 2.2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
         loss3 = 0.9 - torch.mean(torch.abs(sim[:, 0] - sim[:, 1]))
         return 1 * loss1 + 1 * loss2 + 0 * loss3
+
+
+class N_pair_loss(torch.nn.Module):
+    def __init__(self):
+        super(N_pair_loss, self).__init__()
+
+    def forward(self, dis, u=0.1, margin=1):
+        # u is the parameter for regularization loss constant
+
+        bn = dis.size()[0]
+
+        loss = 0
+        for i in range(bn):
+
+            Dij = dis[i,i]
+
+            Dik = dis[i,:]
+            Dik[i] = 0
+            Djk = dis[:,i]
+            Djk[i] = 0
+
+            loss_i = torch.log(torch.sum(torch.exp(margin * torch.ones(Dik.size()) - Dik) + torch.exp(
+                margin * torch.ones(Djk.size()) - Djk), dim=0)) + Dij
+            if torch.norm(loss_i, p=1) < 0:
+                continue
+            else:
+                loss_i = torch.pow(loss_i, 2)
+                loss = loss + loss_i
+        loss = loss / (2 * bn)
+
+        # S = torch.mm(vfeat, torch.t(afeat))
+        # S = torch.exp(S)
+        # S_sum_1 = torch.sum(S, 0)
+        # S_sum_2 = torch.sum(S, 1)
+        # diag = torch.diag(S)
+        #
+        # loss_v = (-1) * torch.sum(torch.log(torch.div(diag, S_sum_1))) / bn
+        # loss_a = (-1) * torch.sum(torch.log(torch.div(diag, S_sum_2))) / bn
+
+
+        return loss
