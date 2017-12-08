@@ -8,13 +8,8 @@ batchSize: 64
 manualSeed: 
 adam: True
 lr: 0.0001
-<<<<<<< HEAD
 lr_decay: 0.85
 lr_decay_epoch: 5
-=======
-lr_decay: 0.9
-lr_decay_epoch: 20
->>>>>>> f28fbd6626de2367cdd9d7059299eac3745c8741
 momentum: 0.9
 weight_decay: 0.00001
 max_epochs: 200
