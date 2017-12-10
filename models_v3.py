@@ -55,7 +55,7 @@ class VAMetric_conv(nn.Module):
         # self.mp = nn.MaxPool1d(kernel_size=4)
         self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)
         self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
-        self.fc4 = nn.Linear(in_features=1024, out_features=512)
+        self.fc4 = nn.Linear(in_features=1024, out_features=2)
         self.fc5 = nn.Linear(in_features=512, out_features=128)
         self.fc6 = nn.Linear(in_features=128, out_features=2)
         self.init_params()
@@ -89,10 +89,6 @@ class VAMetric_conv(nn.Module):
         vafeat = self.fc3(vafeat)
         vafeat = F.relu(vafeat)
         vafeat = self.fc4(vafeat)
-        vafeat = F.relu(vafeat)
-        vafeat = self.fc5(vafeat)
-        vafeat = F.relu(vafeat)
-        vafeat = self.fc6(vafeat)
 
 
         result = F.softmax(vafeat)
@@ -151,6 +147,7 @@ class N_pair_loss(torch.nn.Module):
         bn = sim.size()[0]
         loss1 = (bn - torch.sum(torch.diag(sim)))/bn
         sim = sim - torch.diag(torch.diag(sim))
-        loss2 = torch.mean(torch.max(sim,dim=1)[0])
-        #loss2 = torch.sum(torch.sum(sim,dim=1),dim=0)
+        #loss2 = torch.mean(torch.max(sim,dim=1)[0])
+        loss2 = torch.sum(torch.sum(sim,dim=1),dim=0)/(bn*(bn-1))
+
         return loss1 + loss2
