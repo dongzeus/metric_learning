@@ -118,6 +118,9 @@ class conv_loss_dqy(torch.nn.Module):
         return 1 * loss1 + 1 * loss2 + 0 * loss3
 
 
+
+
+
 class N_pair_loss(torch.nn.Module):
     def __init__(self):
         super(N_pair_loss, self).__init__()
@@ -133,7 +136,7 @@ class N_pair_loss(torch.nn.Module):
             Djk = dis[:, i].clone()
             Djk[i] = 0
             margin_ = margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda()
-            loss_i = torch.log(torch.sum(torch.exp(margin_ - Dik) + torch.exp(margin_ - Djk), dim=0)) + Dij
+            loss_i = torch.log(torch.sum(torch.exp(margin_ - Dik) + torch.exp(margin_ - Djk), dim=0)) + Dij*bn
             if torch.norm(loss_i, p=1).data[0] < 0:
                 continue
             else:
