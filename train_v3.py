@@ -136,14 +136,15 @@ def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loade
         for k in np.arange(bz):
             cur_vfeat = vfeat[k].clone()
             vfeat_k = cur_vfeat.repeat(bz, 1, 1)
-            dis_k, dis1, dis2 = model(vfeat_k, afeat)
-            dis_k = dis_k.view(1,-1)
+            sim_k, dis1, dis2 = model(vfeat_k, afeat)
+            sim_k = sim_k[:,0]
+            sim_k = sim_k.resize(1,bz)
             if k == 0:
-                dis = dis_k
+                sim = sim_k
             else:
-                dis = torch.cat((dis, dis_k), dim=0)
+                sim = torch.cat((sim, sim_k), dim=0)
 
-        loss = criterion(dis)  # compute contrastive loss
+        loss = criterion(sim)  # compute contrastive loss
 
 
 

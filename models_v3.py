@@ -56,7 +56,7 @@ class VAMetric_conv(nn.Module):
         # self.mp = nn.MaxPool1d(kernel_size=4)
         self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)
         self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
-        self.fc4 = nn.Linear(in_features=1024, out_features=1)
+        self.fc4 = nn.Linear(in_features=1024, out_features=2)
         self.fc5 = nn.Linear(in_features=512, out_features=128)
         self.fc6 = nn.Linear(in_features=128, out_features=2)
         self.init_params()
@@ -98,7 +98,7 @@ class VAMetric_conv(nn.Module):
         # vafeat = self.fc6(vafeat)
 
 
-        result = vafeat
+        result = F.softmax(vafeat)
 
         return result,0,0
 
@@ -120,28 +120,41 @@ class conv_loss_dqy(torch.nn.Module):
 
 
 
-
+#
+# class N_pair_loss(torch.nn.Module):
+#     def __init__(self):
+#         super(N_pair_loss, self).__init__()
+#
+#     def forward(self, dis, margin=1):
+#         bn = dis.size()[0]
+#         loss = 0
+#         for i in range(bn):
+#
+#             Dij = dis[i, i]
+#             Dik = dis[i, :].clone()
+#             Dik[i] = 0
+#             Djk = dis[:, i].clone()
+#             Djk[i] = 0
+#             margin_ = margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda()
+#             loss_i = torch.log(torch.sum(torch.exp(margin_ - Dik) + torch.exp(margin_ - Djk), dim=0)) + Dij
+#             if torch.norm(loss_i, p=1).data[0] < 0:
+#                 continue
+#             else:
+#                 loss_i = torch.pow(loss_i, 2)
+#                 loss = loss + loss_i
+#         loss = loss / (2 * bn)
+#
+#         return loss
+#
 class N_pair_loss(torch.nn.Module):
     def __init__(self):
         super(N_pair_loss, self).__init__()
 
-    def forward(self, dis, margin=1):
-        bn = dis.size()[0]
-        loss = 0
-        for i in range(bn):
+    def forward(self, sim):
+        bn = sim.size()[0]
+        loss1 = bn - torch.sum(torch.diag(sim))/bn
+        sim = sim - torch.diag(torch.diag(sim))
+        loss2 = torch.sum(torch.sum(sim,dim=1),dim=0)
+        loss2 = loss2 / (bn*(bn-1))
 
-            Dij = dis[i, i]
-            Dik = dis[i, :].clone()
-            Dik[i] = 0
-            Djk = dis[:, i].clone()
-            Djk[i] = 0
-            margin_ = margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda()
-            loss_i = torch.log(torch.sum(torch.exp(margin_ - Dik) + torch.exp(margin_ - Djk), dim=0)) + Dij
-            if torch.norm(loss_i, p=1).data[0] < 0:
-                continue
-            else:
-                loss_i = torch.pow(loss_i, 2)
-                loss = loss + loss_i
-        loss = loss / (2 * bn)
-
-        return loss
+        return  loss1 + loss2
