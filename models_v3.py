@@ -55,7 +55,7 @@ class VAMetric_conv(nn.Module):
         # self.mp = nn.MaxPool1d(kernel_size=4)
         self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)
         self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
-        self.fc4 = nn.Linear(in_features=1024, out_features=2)
+        self.fc4 = nn.Linear(in_features=1024, out_features=512)
         self.fc5 = nn.Linear(in_features=512, out_features=128)
         self.fc6 = nn.Linear(in_features=128, out_features=2)
         self.init_params()
@@ -72,14 +72,13 @@ class VAMetric_conv(nn.Module):
         #vfeat = self.vLSTM(vfeat)
         #afeat = self.aLSTM(afeat)
 
-        #vfeat = self.vfc1(vfeat)
-        #vfeat = F.relu(vfeat)
-        #vfeat = self.vfc2(vfeat)
-        #vfeat = F.relu(vfeat)
+        vfeat = self.vfc1(vfeat)
+        vfeat = F.relu(vfeat)
+        vfeat = self.vfc2(vfeat)
+        vfeat = F.relu(vfeat)
 
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
         afeat = afeat.view(afeat.size(0), 1, 1, -1)
-        afeat = afeat.repeat(1,1,1,8)
 
         vafeat = torch.cat((vfeat, afeat), dim=2)
         vafeat = self.conv1(vafeat)
@@ -90,10 +89,10 @@ class VAMetric_conv(nn.Module):
         vafeat = self.fc3(vafeat)
         vafeat = F.relu(vafeat)
         vafeat = self.fc4(vafeat)
-       # vafeat = F.relu(vafeat)
-       # vafeat = self.fc5(vafeat)
-        #vafeat = F.relu(vafeat)
-        #vafeat = self.fc6(vafeat)
+        vafeat = F.relu(vafeat)
+        vafeat = self.fc5(vafeat)
+        vafeat = F.relu(vafeat)
+        vafeat = self.fc6(vafeat)
 
 
         result = F.softmax(vafeat)
