@@ -53,10 +53,10 @@ class VAMetric_conv(nn.Module):
         self.afc1 = nn.Linear(in_features=128,out_features=128)
         self.afc2 = nn.Linear(in_features=128,out_features=128)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=(2, 128), stride=128)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)
         # self.mp = nn.MaxPool1d(kernel_size=4)
-        self.conv2 = nn.Conv1d(in_channels=64, out_channels=64, kernel_size=8, stride=1)
-        self.fc3 = nn.Linear(in_features=64 * 113, out_features=1024)
+        self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)
+        self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
         self.fc4 = nn.Linear(in_features=1024, out_features=2)
         self.fc5 = nn.Linear(in_features=512, out_features=128)
         self.fc6 = nn.Linear(in_features=128, out_features=2)
@@ -79,10 +79,6 @@ class VAMetric_conv(nn.Module):
         vfeat = self.vfc2(vfeat)
         vfeat = F.relu(vfeat)
 
-        afeat = self.afc1(afeat)
-        afeat = F.relu(afeat)
-        afeat = self.afc2(afeat)
-        afeat = F.relu(afeat)
 
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
         afeat = afeat.view(afeat.size(0), 1, 1, -1)
