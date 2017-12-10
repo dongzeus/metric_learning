@@ -163,7 +163,7 @@ def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loade
             log_str = 'Epoch: [{0}][{1}/{2}]\t Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
                 epoch, i, len(train_loader), batch_time=batch_time, loss=losses)
             print(log_str)
-            evaluate.test(test_video_loader, test_audio_loader, model, opts_test)
+    evaluate.test(test_video_loader, test_audio_loader, model, opts_test)
 
 
 
