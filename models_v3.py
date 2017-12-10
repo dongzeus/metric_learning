@@ -157,4 +157,4 @@ class N_pair_loss(torch.nn.Module):
         loss2 = torch.mean((torch.max(sim,dim=1))
         #loss2 = torch.sum(torch.sum(sim,dim=1),dim=0)
 
-        return  loss1 + loss2
+        return loss1 + loss2
