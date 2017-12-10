@@ -98,7 +98,7 @@ class VAMetric_conv(nn.Module):
         # vafeat = self.fc6(vafeat)
 
 
-        result = F.relu(vafeat)
+        result = vafeat
 
         return result,0,0
 
