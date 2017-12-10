@@ -154,7 +154,6 @@ class N_pair_loss(torch.nn.Module):
         bn = sim.size()[0]
         loss1 = (bn - torch.sum(torch.diag(sim)))/bn
         sim = sim - torch.diag(torch.diag(sim))
-        loss2 = torch.mean((torch.max(sim,dim=1))
+        loss2 = torch.mean((torch.max(sim,dim=1)))
         #loss2 = torch.sum(torch.sum(sim,dim=1),dim=0)
-
         return loss1 + loss2
