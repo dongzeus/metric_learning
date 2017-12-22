@@ -3,7 +3,8 @@ ngpu: 1
 gpu_id: '0'
 #data_dir: ../Train       # replace it as your data path
 data_dir: ../originalData
-flist: './filelists/train_filelist.txt'
+#flist: './filelists/train_filelist.txt'
+flist: './filelists/train_filelist_raw.txt'
 workers: 4
 batchSize: 4
 manualSeed: 
