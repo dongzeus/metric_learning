@@ -1,10 +1,10 @@
-cuda: True
+cuda: False
 ngpu: 1
 gpu_id: '0'
 data_dir: ../Train       # replace it as your data path
 flist: './filelists/train_filelist.txt'
 workers: 4
-batchSize: 4
+batchSize: 64
 manualSeed: 
 adam: True
 lr: 0.0001
