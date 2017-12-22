@@ -48,7 +48,8 @@ class VAMetric_conv(nn.Module):
         self.vLSTM = FeatLSTM(1024,512,128)
         self.aLSTM = FeatLSTM(128,128,128)
 
-        self.vfc1 = nn.Linear(in_features=1024, out_features=128)
+        self.vfc1 = nn.Linear(in_features=1024, out_features=512)
+        self.vfc2 = nn.Linear(512,128)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128*4), stride=128) # output bn * 32 * 117
         self.pool1 = nn.MaxPool1d(kernel_size=3, stride=3) # output bn * 32 * 39
@@ -72,8 +73,8 @@ class VAMetric_conv(nn.Module):
 
         vfeat = self.vfc1(vfeat)
         vfeat = F.relu(vfeat)
-        # vfeat = self.vfc2(vfeat)
-        # vfeat = F.relu(vfeat)
+        vfeat = self.vfc2(vfeat)
+        vfeat = F.relu(vfeat)
 
 
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
