@@ -141,16 +141,20 @@ def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loade
             cur_vfeat = vfeat[k].clone()
             vfeat_k = cur_vfeat.repeat(bz, 1, 1)
             sim_k, dis1, dis2 = model(vfeat_k, afeat)
-            sim_k = sim_k[:,0]
-            sim_k = sim_k.resize(1,bz)
+            sim_k_0 = sim_k[:,0]
+            sim_k_1 = sim_k[:,1]
+            sim_k_0 = sim_k_0.resize(1,bz)
+            sim_k_1 = sim_k_1.resize(1,bz)
             if k == 0:
-                sim = sim_k
+                sim_0 = sim_k_0
+                sim_1 = sim_k_1
             else:
-                sim = torch.cat((sim, sim_k), dim=0)
+                sim_0 = torch.cat((sim_0, sim_k_0), dim=0)
+                sim_1 = torch.cat((sim_1, sim_k_1), dim=0)
         #########
 
 
-        loss = criterion(sim)  # compute contrastive loss
+        loss = criterion(sim_0,sim_1)  # compute contrastive loss
 
         # record the loss and distance to plot later
         # dis1_rec.append(list(dis1.data)[0])
