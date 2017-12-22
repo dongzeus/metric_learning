@@ -52,21 +52,15 @@ class VAMetric_conv(nn.Module):
         #         param.requires_grad = False
         #     self.resnet.fc = nn.Linear(512,128)
 
-        self.vLSTM = FeatLSTM(1024,512,128)
-        self.aLSTM = FeatLSTM(128,128,128)
+        self.vfc1 = nn.Linear(in_features=1000, out_features=512)
+        self.vfc2 = nn.Linear(512,128)
 
-        self.vfc1 = nn.Linear(in_features=1000, out_features=128)
-        self.vfc2 = nn.Linear(in_features=512, out_features=128)
-        self.afc1 = nn.Linear(in_features=128,out_features=128)
-        self.afc2 = nn.Linear(in_features=128,out_features=128)
-
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)
-        # self.mp = nn.MaxPool1d(kernel_size=4)
-        self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)
-        self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
-        self.fc4 = nn.Linear(in_features=1024, out_features=2)
-        self.fc5 = nn.Linear(in_features=512, out_features=128)
-        self.fc6 = nn.Linear(in_features=128, out_features=2)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=(2, 128*4), stride=128) # output bn * 32 * 117
+        self.pool1 = nn.MaxPool1d(kernel_size=3, stride=3) # output bn * 32 * 39
+        self.conv2 = nn.Conv1d(in_channels=8, out_channels=16, kernel_size=4, stride=1) # output bn * 32 * 36
+        self.pool2 = nn.MaxPool1d(kernel_size=4,stride=4) # output bn * 32 * 9
+        self.fc3 = nn.Linear(in_features=16 * 9, out_features=128)
+        self.fc4 = nn.Linear(in_features=128, out_features=2)
         self.init_params()
 
     def init_params(self):
@@ -81,14 +75,18 @@ class VAMetric_conv(nn.Module):
         vfeat = self.resnet(vfeat)
         vfeat = F.relu(vfeat)
         vfeat = self.vfc1(vfeat)
+        vfeat = F.relu(vfeat)
+        vfeat = self.vfc2(vfeat)
+        vfeat = F.relu((vfeat))
 
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
         afeat = afeat.view(afeat.size(0), 1, 1, -1)
 
         vafeat = torch.cat((vfeat, afeat), dim=2)
         vafeat = self.conv1(vafeat)
-        vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
+        vafeat = self.pool1(vafeat)
         vafeat = self.conv2(vafeat)
+        vafeat = self.pool2(vafeat)
 
         vafeat = vafeat.view([vafeat.size(0), -1])
         vafeat = self.fc3(vafeat)
