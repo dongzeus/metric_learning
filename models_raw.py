@@ -72,8 +72,9 @@ class VAMetric_conv(nn.Module):
 
     def forward(self, vfeat, afeat):
 
-        print(vfeat.size)
-        vfeat = self.resnet(vfeat)
+        bn = vfeat.size(0)
+        for i in range(bn):
+            vfeat[i] = self.resnet(vfeat[i])
         vfeat = F.relu(vfeat)
         vfeat = self.vfc1(vfeat)
         vfeat = F.relu(vfeat)
