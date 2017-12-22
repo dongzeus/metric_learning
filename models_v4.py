@@ -48,10 +48,7 @@ class VAMetric_conv(nn.Module):
         self.vLSTM = FeatLSTM(1024,512,128)
         self.aLSTM = FeatLSTM(128,128,128)
 
-        self.vfc1 = nn.Linear(in_features=1024, out_features=512)
-        self.vfc2 = nn.Linear(in_features=512, out_features=128)
-        self.afc1 = nn.Linear(in_features=128,out_features=128)
-        self.afc2 = nn.Linear(in_features=128,out_features=128)
+        self.vfc1 = nn.Linear(in_features=1024, out_features=128)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128*4), stride=128) # output bn * 32 * 117
         self.pool1 = nn.MaxPool1d(kernel_size=3, stride=3) # output bn * 32 * 39
@@ -75,8 +72,8 @@ class VAMetric_conv(nn.Module):
 
         vfeat = self.vfc1(vfeat)
         vfeat = F.relu(vfeat)
-        vfeat = self.vfc2(vfeat)
-        vfeat = F.relu(vfeat)
+        # vfeat = self.vfc2(vfeat)
+        # vfeat = F.relu(vfeat)
 
 
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
@@ -109,9 +106,8 @@ class conv_loss_dqy(torch.nn.Module):
         length = len(sim[:, 1])
         loss1 = torch.mean(torch.pow((1 - label) * sim[:, 1], 2))
         loss2 = torch.mean(torch.pow(label * sim[:, 0], 2))
-        # loss3 = 2.2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
-        loss3 = 0.9 - torch.mean(torch.abs(sim[:, 0] - sim[:, 1]))
-        return 1 * loss1 + 1 * loss2 + 0 * loss3
+        loss3 = 1.1 - (torch.mean(sim[0:length / 2 - 1, 0]) - torch.mean(sim[length / 2:length - 1], 0))
+        return 0.7 * loss1 + 0.3 * loss2 + 0.5 * loss3
 
 
 
