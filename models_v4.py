@@ -107,7 +107,7 @@ class conv_loss_dqy(torch.nn.Module):
         loss1 = torch.mean(torch.pow((1 - label) * sim[:, 1], 2))
         loss2 = torch.mean(torch.pow(label * sim[:, 0], 2))
         loss3 = 1.1 - (torch.mean(sim[0:length / 2 - 1, 0]) - torch.mean(sim[length / 2:length - 1], 0))
-        return 0.7 * loss1 + 0.3 * loss2 + 0.5 * loss3
+        return 1 * loss1 + 1 * loss2 + 0 * loss3
 
 
 
