@@ -80,6 +80,7 @@ class VAMetric_conv(nn.Module):
 
         vafeat = torch.cat((vfeat, afeat), dim=2)
         vafeat = self.conv1(vafeat)
+        vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
         vafeat = self.pool1(vafeat)
         vafeat = self.conv2(vafeat)
         vafeat = self.pool2(vafeat)
@@ -103,10 +104,10 @@ class conv_loss_dqy(torch.nn.Module):
 
     def forward(self, sim, label):
         length = len(sim[:, 1])
-        loss1 = torch.mean(torch.pow((1 - label) * sim[:, 1], 2))
-        loss2 = torch.mean(torch.pow(label * sim[:, 0], 2))
+        loss1 = torch.mean((1 - label) * sim[:, 1])
+        loss2 = torch.mean(label * sim[:, 0])
         loss3 = 1.1 - (torch.mean(sim[0:length / 2 - 1, 0]) - torch.mean(sim[length / 2:length - 1], 0))
-        return 1 * loss1 + 1 * loss2 + 0 * loss3
+        return 1 * loss1 + 1 * loss2
 
 
 
