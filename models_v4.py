@@ -51,12 +51,12 @@ class VAMetric_conv(nn.Module):
         self.vfc1 = nn.Linear(in_features=1024, out_features=512)
         self.vfc2 = nn.Linear(512,128)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128*2), stride=128) # output bn * 32 * 117
-        self.pool1 = nn.MaxPool1d(kernel_size=3, stride=3) # output bn * 32 * 39
-        self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=4, stride=1) # output bn * 32 * 36
-        self.pool2 = nn.MaxPool1d(kernel_size=4,stride=4) # output bn * 32 * 9
-        self.fc3 = nn.Linear(in_features=32 * 9, out_features=128)
-        self.fc4 = nn.Linear(in_features=128, out_features=2)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128) # output bn * 32 * 120
+        self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2) # output bn * 32 * 60
+        self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=5, stride=1) # output bn * 32 * 56
+        self.pool2 = nn.MaxPool1d(kernel_size=4,stride=4) # output bn * 32 * 14
+        self.fc3 = nn.Linear(in_features=32 * 14, out_features=512)
+        self.fc4 = nn.Linear(in_features=512, out_features=2)
         self.init_params()
 
     def init_params(self):
