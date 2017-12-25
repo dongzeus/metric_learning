@@ -86,70 +86,71 @@ def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loade
 
     for i, (vfeat, afeat) in enumerate(train_loader):
         #shuffling the index orders
-        # bz = vfeat.size()[0]
-        # orders = np.arange(bz).astype('int32')
-        # shuffle_orders = orders.copy()
-        # np.random.shuffle(shuffle_orders)
-        #
-        # # creating a new data with the shuffled indices
-        # afeat2 = afeat[torch.from_numpy(shuffle_orders).long()].clone()
-        #
-        # # concat the vfeat and afeat respectively
-        # afeat0 = torch.cat((afeat, afeat2), 0)
-        # vfeat0 = torch.cat((vfeat, vfeat), 0)
-        #
-        # # generating the labels
-        # # 1. the labels for the shuffled feats
-        # label1 = (orders == shuffle_orders + 0).astype('float32')
-        # target1 = torch.from_numpy(label1)
-        #
-        # # 2. the labels for the original feats
-        # label2 = label1.copy()
-        # label2[:] = 1
-        # target2 = torch.from_numpy(label2)
-        #
-        # # concat the labels together
-        # target = torch.cat((target2, target1), 0)
-        # target = 1 - target
-        #
-        # # transpose the feats
-        # # vfeat0 = vfeat0.transpose(2, 1)
-        # # afeat0 = afeat0.transpose(2, 1)
-        #
-        #
-        # # put the data into Variable
-        # vfeat_var = Variable(vfeat0)
-        # afeat_var = Variable(afeat0)
-        # target_var = Variable(target)
-        #
-        # # if you have gpu, then shift data to GPU
-        # if opt.cuda:
-        #     vfeat_var = vfeat_var.cuda()
-        #     afeat_var = afeat_var.cuda()
-        #     target_var = target_var.cuda()
-        # sim,dis1,dis2 = model(vfeat_var,afeat_var)
-        ##### for N pair loss
-        vfeat = Variable(vfeat)
-        afeat = Variable(afeat)
-        if opt.cuda:
-            vfeat = vfeat.cuda()
-            afeat = afeat.cuda()
         bz = vfeat.size()[0]
-        for k in np.arange(bz):
-            cur_vfeat = vfeat[k].clone()
-            vfeat_k = cur_vfeat.repeat(bz, 1, 1)
-            sim_k, dis1, dis2 = model(vfeat_k, afeat)
-            sim_k_0 = sim_k[:,0]
-            sim_k_1 = sim_k[:,1]
-            sim_k_0 = sim_k_0.resize(1,bz)
-            sim_k_1 = sim_k_1.resize(1,bz)
-            if k == 0:
-                sim_0 = sim_k_0.clone()
-                sim_1 = sim_k_1.clone()
-            else:
-                sim_0 = torch.cat((sim_0, sim_k_0), dim=0)
-                sim_1 = torch.cat((sim_1, sim_k_1), dim=0)
-        loss = criterion(sim_0,sim_1)
+        orders = np.arange(bz).astype('int32')
+        shuffle_orders = orders.copy()
+        np.random.shuffle(shuffle_orders)
+
+        # creating a new data with the shuffled indices
+        afeat2 = afeat[torch.from_numpy(shuffle_orders).long()].clone()
+
+        # concat the vfeat and afeat respectively
+        afeat0 = torch.cat((afeat, afeat2), 0)
+        vfeat0 = torch.cat((vfeat, vfeat), 0)
+
+        # generating the labels
+        # 1. the labels for the shuffled feats
+        label1 = (orders == shuffle_orders + 0).astype('float32')
+        target1 = torch.from_numpy(label1)
+
+        # 2. the labels for the original feats
+        label2 = label1.copy()
+        label2[:] = 1
+        target2 = torch.from_numpy(label2)
+
+        # concat the labels together
+        target = torch.cat((target2, target1), 0)
+        target = 1 - target
+
+        # transpose the feats
+        # vfeat0 = vfeat0.transpose(2, 1)
+        # afeat0 = afeat0.transpose(2, 1)
+
+
+        # put the data into Variable
+        vfeat_var = Variable(vfeat0)
+        afeat_var = Variable(afeat0)
+        target_var = Variable(target)
+
+        # if you have gpu, then shift data to GPU
+        if opt.cuda:
+            vfeat_var = vfeat_var.cuda()
+            afeat_var = afeat_var.cuda()
+            target_var = target_var.cuda()
+        sim,dis1,dis2 = model(vfeat_var,afeat_var)
+        loss = criterion(sim,target_var)
+        # ##### for N pair loss
+        # vfeat = Variable(vfeat)
+        # afeat = Variable(afeat)
+        # if opt.cuda:
+        #     vfeat = vfeat.cuda()
+        #     afeat = afeat.cuda()
+        # bz = vfeat.size()[0]
+        # for k in np.arange(bz):
+        #     cur_vfeat = vfeat[k].clone()
+        #     vfeat_k = cur_vfeat.repeat(bz, 1, 1)
+        #     sim_k, dis1, dis2 = model(vfeat_k, afeat)
+        #     sim_k_0 = sim_k[:,0]
+        #     sim_k_1 = sim_k[:,1]
+        #     sim_k_0 = sim_k_0.resize(1,bz)
+        #     sim_k_1 = sim_k_1.resize(1,bz)
+        #     if k == 0:
+        #         sim_0 = sim_k_0.clone()
+        #         sim_1 = sim_k_1.clone()
+        #     else:
+        #         sim_0 = torch.cat((sim_0, sim_k_0), dim=0)
+        #         sim_1 = torch.cat((sim_1, sim_k_1), dim=0)
+        # loss = criterion(sim_0,sim_1)
 
 
         # record the loss and distance to plot later
@@ -201,8 +202,8 @@ def main():
         model.load_state_dict(torch.load(opt.init_model))
 
     # Contrastive Loss
-    # criterion = models.conv_loss_dqy()
-    criterion = models.N_pair_loss()
+    criterion = models.conv_loss_dqy()
+    #criterion = models.N_pair_loss()
 
     if opt.cuda:
         print('shift model and criterion to GPU .. ')
