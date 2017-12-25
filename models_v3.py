@@ -71,8 +71,8 @@ class VAMetric_conv(nn.Module):
 
     def forward(self, vfeat, afeat):
 
-        #vfeat = self.vLSTM(vfeat)
-        #afeat = self.aLSTM(afeat)
+        vfeat = self.vLSTM(vfeat)
+        afeat = self.aLSTM(afeat)
 
         vfeat = self.vfc1(vfeat)
         vfeat = F.relu(vfeat)
