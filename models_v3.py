@@ -148,9 +148,9 @@ class N_pair_loss(torch.nn.Module):
 
     def forward(self, sim_0,sim_1):
         bn = sim_0.size()[0]
-        loss1 = torch.sum(torch.diag(sim_1))/bn
+        loss1 = torch.mean(torch.diag(sim_1))
         sim_0 = sim_0 - torch.diag(torch.diag(sim_0))
         #loss2 = torch.mean(torch.max(sim,dim=1)[0])
-        loss2 = torch.sum(torch.sum(sim_0,dim=1),dim=0)/(bn*(bn-1))
+        loss2 = torch.mean(torch.mean(sim_0,dim=1),dim=0)
 
         return loss1 + loss2
