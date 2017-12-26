@@ -25,4 +25,5 @@ prefix: 'VA_METRIC'
 model: ''
 gradient_clip: 0.01
 init_model: ''
+init_model_epoch: ''
 model_number: 5

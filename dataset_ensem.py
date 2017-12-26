@@ -4,11 +4,16 @@ import os
 import random
 
 
+
 class VideoFeatDataset(data.Dataset):
-    def __init__(self, root, flist=None, test_list='', test_number=100, frame_num=120, which_feat='both', creat_test=1,
-                 bagging=False):
+    def __init__(self, root, flist=None, test_list='', test_number=100, frame_num=120, which_feat='both', creat_test=False,
+                 bagging=False,test_list_pass=None):
         self.root = root
-        self.pathlist = self.get_file_list(flist)
+        if test_list_pass is None:
+            self.pathlist = self.get_file_list(flist)
+        else:
+            self.pathlist = test_list_pass
+        self.ori_pathlist = self.pathlist
         self.fnum = frame_num
         self.which_feat = which_feat
         self.test_list = test_list
@@ -49,6 +54,9 @@ class VideoFeatDataset(data.Dataset):
 
     def loader(self, filepath):
         return np.load(filepath)
+
+    def get_ori_pathlist(self):
+        return self.ori_pathlist
 
     def get_file_list(self, flist):
         filelist = []
@@ -98,3 +106,4 @@ class VideoFeatDataset(data.Dataset):
         # return feat_vector * scalar + bias
 
         return feat_vector * scalar + min_quantized_value
+

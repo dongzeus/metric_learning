@@ -45,8 +45,12 @@ if not os.path.exists(opt.checkpoint_folder):
 
 tds_ls = []
 for i in range(opt.model_number):
-    tds_ls.append(VideoFeatDataset(root=opt.data_dir, flist=opt.flist, test_list=opt.test_flist,
-                                   test_number=opt.test_number, bagging=True))
+    if i == 0:
+        tds_ls.append(VideoFeatDataset(root=opt.data_dir, flist=opt.flist, test_list=opt.test_flist,
+                                       test_number=opt.test_number, bagging=True, creat_test=True))
+    else:
+        tds_ls.append(VideoFeatDataset(root=opt.data_dir, flist=opt.flist, bagging=True, creat_test=False,
+                                       test_list_pass=tds_ls[0].get_ori_pathlist()))
 
 # =================== creat test set before import evaluate ===================
 import evaluate_ensem as evaluate
@@ -213,9 +217,13 @@ def main():
         m = models.VAMetric_conv()
         model_ls.append(m)
 
-    # if opt.init_model != '':
-    #     print('loading pretrained model from {0}'.format(opt.init_model))
-    #     model.load_state_dict(torch.load(opt.init_model))
+    if opt.init_model_epoch != '':
+
+        for i in range(opt.model_number):
+            path = '{0}/{1}_state_epoch{2}_model{3}.pth'.format(opt.checkpoint_folder, opt.prefix,
+                                                                opt.init_model_epoch, i + 1)
+            print('loading pretrained model from {0}'.format(path))
+            model_ls[i].load_state_dict(torch.load(path))
 
     # Contrastive Loss
     criterion = models.conv_loss_dqy()
