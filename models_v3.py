@@ -56,7 +56,7 @@ class VAMetric_conv(nn.Module):
         # self.mp = nn.MaxPool1d(kernel_size=4)
         self.dp = nn.Dropout(0.2)
         self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)  # output bn*32*113
-        self.fc3 = nn.Linear(in_features=128 * 113, out_features=4096)
+        self.fc3 = nn.Linear(in_features=32 * 113, out_features=4096)
         self.fc4 = nn.Linear(in_features=4096, out_features=1024)
         self.fc5 = nn.Linear(in_features=1024, out_features=2)
         self.fc6 = nn.Linear(in_features=128, out_features=2)
