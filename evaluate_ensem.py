@@ -105,8 +105,11 @@ def test(video_loader, audio_loader, model_ls, opt):
             order = topk[:, k]
             if k in order:
                 right = right + 1
-        print('The No.{} similarity matrix: \n {}'.format(num,sim_mat))
-        print('No.{} testing accuracy (top{}): {:.3f}'.format(num,opt.topk, right / sample_num))
+        print('==================================================================================')
+        print('The No.{} similarity matrix: \n {}'.format(num+1,sim_mat))
+        print('No.{} testing accuracy (top{}): {:.3f}'.format(num+1,opt.topk, right / sample_num))
+        print('==================================================================================')
+
 
         if num == 0:
             simmat_ensem = sim_mat
@@ -122,8 +125,10 @@ def test(video_loader, audio_loader, model_ls, opt):
         order = topk[:, k]
         if k in order:
             right = right + 1
+    print('==================================================================================')
     print('The ensembel similarity matrix: \n {}'.format(simmat_ensem))
     print('Ensembel testing accuracy (top{}): {:.3f}'.format(opt.topk, right / sample_num))
+    print('==================================================================================')
 
 
 def main():
