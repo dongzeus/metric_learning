@@ -41,8 +41,8 @@ if torch.cuda.is_available():
         cudnn.benchmark = True
 
 # loading test dataset
-test_video_dataset = dset(opt.data_dir, opt.video_flist, which_feat='vfeat')
-test_audio_dataset = dset(opt.data_dir, opt.audio_flist, which_feat='afeat')
+test_video_dataset = dset(root=opt.data_dir, flist=opt.video_flist, which_feat='vfeat', creat_test=0)
+test_audio_dataset = dset(root=opt.data_dir, flist=opt.audio_flist, which_feat='afeat', creat_test=0)
 print('number of test samples is: {0}'.format(len(test_video_dataset)))
 print('finished loading data')
 
@@ -80,8 +80,8 @@ def test(video_loader, audio_loader, model, opt):
                     afeat_var = afeat_var.cuda()
 
                 cur_sim = model(vfeat_var, afeat_var)
-                cur_sim = cur_sim[:,0].clone()
-                cur_sim = cur_sim.resize(afeat.size()[0],1)
+                cur_sim = cur_sim[:, 0].clone()
+                cur_sim = cur_sim.resize(afeat.size()[0], 1)
                 if k == 0:
                     bz_sim = cur_sim.clone()
                 else:

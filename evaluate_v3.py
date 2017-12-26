@@ -30,8 +30,8 @@ print(opt)
 if opt.checkpoint_folder is None:
     opt.checkpoint_folder = 'checkpoints'
 
-test_video_dataset = dset(opt.data_dir, opt.video_flist, which_feat='vfeat')
-test_audio_dataset = dset(opt.data_dir, opt.audio_flist, which_feat='afeat')
+test_video_dataset = dset(root=opt.data_dir, flist=opt.video_flist, which_feat='vfeat')
+test_audio_dataset = dset(root=opt.data_dir, flist=opt.audio_flist, which_feat='afeat')
 
 print('number of test samples is: {0}'.format(len(test_video_dataset)))
 print('finished loading data')

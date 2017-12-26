@@ -15,7 +15,6 @@ from torch.autograd import Variable
 from torch.optim.lr_scheduler import LambdaLR as LR_Policy
 
 import models_v3 as models
-import evaluate_v3 as evaluate
 from dataset import VideoFeatDataset
 from tools.config_tools import Config
 from tools import utils
@@ -44,7 +43,9 @@ if opt.checkpoint_folder is None:
 if not os.path.exists(opt.checkpoint_folder):
     os.system('mkdir {0}'.format(opt.checkpoint_folder))
 
-train_dataset = VideoFeatDataset(opt.data_dir, flist=opt.flist)
+train_dataset = VideoFeatDataset(root=opt.data_dir, flist=opt.flist, test_list=opt.test_flist, test_number=opt.test_number)
+# =================== creat test set before import evaluate ===================
+import evaluate_new as evaluate
 
 print('number of train samples is: {0}'.format(len(train_dataset)))
 print('finished loading data')
@@ -244,8 +245,8 @@ def main():
 
     (opts_test, args) = parser.parse_args()
     opts_test = Config(opts_test.config)
-    test_video_dataset = VideoFeatDataset(opts_test.data_dir, opts_test.video_flist, which_feat='vfeat')
-    test_audio_dataset = VideoFeatDataset(opts_test.data_dir, opts_test.audio_flist, which_feat='afeat')
+    test_video_dataset = VideoFeatDataset(root=opts_test.data_dir, flist=opts_test.video_flist, which_feat='vfeat',creat_test=0)
+    test_audio_dataset = VideoFeatDataset(root=opts_test.data_dir, flist=opts_test.audio_flist, which_feat='afeat',creat_test=0)
     test_video_loader = torch.utils.data.DataLoader(test_video_dataset, batch_size=opts_test.batchSize,
                                                     shuffle=False, num_workers=int(opts_test.workers))
     test_audio_loader = torch.utils.data.DataLoader(test_audio_dataset, batch_size=opts_test.batchSize,
