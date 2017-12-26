@@ -18,6 +18,7 @@ max_epochs: 200
 print_freq: 5
 epoch_save: 5
 epoch_plot: 5
+epoch_test: 5
 checkpoint_folder: ./checkpoints
 prefix: 'VA_METRIC'
 model: ''
