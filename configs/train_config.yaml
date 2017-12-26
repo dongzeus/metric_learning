@@ -1,5 +1,5 @@
-#cuda: True
-cuda: False
+cuda: True
+#cuda: False
 ngpu: 1
 gpu_id: '0'
 data_dir: ../Train       # replace it as your data path
@@ -15,9 +15,9 @@ lr_decay: 0.85
 lr_decay_epoch: 5
 momentum: 0.9
 weight_decay: 0.001
-max_epochs: 1
+max_epochs: 200
 print_freq: 5
-epoch_save: 1
+epoch_save: 10
 epoch_plot: 20
 epoch_test: 10
 checkpoint_folder: ./checkpoints
