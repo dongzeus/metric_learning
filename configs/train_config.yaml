@@ -11,7 +11,7 @@ manualSeed:
 adam: True
 lr: 0.0001
 lr_decay: 0.85
-lr_decay_epoch: 1
+lr_decay_epoch: 5
 momentum: 0.9
 weight_decay: 0.0001
 max_epochs: 200
