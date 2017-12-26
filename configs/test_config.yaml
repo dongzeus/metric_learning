@@ -3,8 +3,8 @@ cuda: True
 ngpu: 1
 gpu_id: '0'
 data_dir: ../Train     # Your dataset path
-video_flist: './filelists/test_Name_List.txt'
-audio_flist: './filelists/test_Name_List.txt'
+video_flist: './filelists/Video_Name_List.txt'
+audio_flist: './filelists/Audio_Name_List.txt'
 workers: 4
 batchSize: 50
 checkpoint_folder: ./checkpoints
