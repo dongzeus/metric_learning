@@ -116,11 +116,13 @@ def test(video_loader, audio_loader, model_ls, opt):
     sorted, indices = torch.sort(simmat_ensem, 0, descending=True)
     np_indices = indices.cpu().data.numpy()
     topk = np_indices[:opt.topk, :]
-    for k in np.arange(simmat_ensem.size(0)):
+    right = 0
+    sample_num = simmat_ensem.size(0)
+    for k in np.arange(sample_num):
         order = topk[:, k]
         if k in order:
             right = right + 1
-    print('The ensembel similarity matrix: \n {}'.format(sim_mat))
+    print('The ensembel similarity matrix: \n {}'.format(simmat_ensem))
     print('Ensembel testing accuracy (top{}): {:.3f}'.format(opt.topk, right / sample_num))
 
 
