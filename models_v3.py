@@ -32,33 +32,32 @@ class FeatLSTM(nn.Module):
             h_t, c_t = self.lstm1(feat_t[:, 0, :], (h_t, c_t))
             h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
             if _ == 0:
-                stream = h_t2.view(h_t2.size(0),1,-1)
+                stream = h_t2.view(h_t2.size(0), 1, -1)
             else:
-                stream = torch.cat((stream,h_t2.view(h_t2.size(0),1,-1)),dim=1)
+                stream = torch.cat((stream, h_t2.view(h_t2.size(0), 1, -1)), dim=1)
         # aggregated feature
 
         return stream
-
 
 
 class VAMetric_conv(nn.Module):
     def __init__(self, framenum=120):
         super(VAMetric_conv, self).__init__()
 
-        self.vLSTM = FeatLSTM(1024,512,128)
-        self.aLSTM = FeatLSTM(128,128,128)
+        self.vLSTM = FeatLSTM(1024, 512, 128)
+        self.aLSTM = FeatLSTM(128, 128, 128)
 
         self.vfc1 = nn.Linear(in_features=1024, out_features=512)
         self.vfc2 = nn.Linear(in_features=512, out_features=128)
-        self.afc1 = nn.Linear(in_features=128,out_features=128)
-        self.afc2 = nn.Linear(in_features=128,out_features=128)
+        self.afc1 = nn.Linear(in_features=128, out_features=128)
+        self.afc2 = nn.Linear(in_features=128, out_features=128)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128), stride=128) # output bn*32*120
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128), stride=128)  # output bn*32*120
         # self.mp = nn.MaxPool1d(kernel_size=4)
         self.dp = nn.Dropout(0.2)
-        self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=8, stride=1) # output bn*32*113
+        self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=8, stride=1)  # output bn*32*113
         self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
-        self.fc4 = nn.Linear(in_features=1024, out_features=2)
+        self.fc4 = nn.Linear(in_features=1024, out_features=1)
         self.fc5 = nn.Linear(in_features=512, out_features=128)
         self.fc6 = nn.Linear(in_features=128, out_features=2)
         self.init_params()
@@ -80,7 +79,6 @@ class VAMetric_conv(nn.Module):
         vfeat = self.vfc2(vfeat)
         vfeat = F.relu(vfeat)
 
-
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
         afeat = afeat.view(afeat.size(0), 1, 1, -1)
 
@@ -95,8 +93,7 @@ class VAMetric_conv(nn.Module):
         vafeat = F.relu(vafeat)
         vafeat = self.fc4(vafeat)
 
-
-        result = F.softmax(vafeat)
+        result = F.tanh(vafeat)
 
         return result
 
@@ -108,17 +105,21 @@ class conv_loss_dqy(torch.nn.Module):
         super(conv_loss_dqy, self).__init__()
 
     def forward(self, sim, label):
-        length = len(sim[:, 1])
-        loss1 = torch.mean(torch.pow((1 - label) * sim[:, 1], 2))
-        loss2 = 1 - torch.mean(torch.pow((1 - label) * sim[:, 0], 2))
-        loss3 = torch.mean(torch.pow(label * sim[:, 0], 2))
-        loss4 = 1 - torch.mean(torch.pow(label * sim[:, 1], 2))
+        # length = len(sim[:, 1])
+        # loss1 = torch.mean(torch.pow((1 - label) * sim[:, 1], 2))
+        # loss2 = 1 - torch.mean(torch.pow((1 - label) * sim[:, 0], 2))
+        # loss3 = torch.mean(torch.pow(label * sim[:, 0], 2))
+        # loss4 = 1 - torch.mean(torch.pow(label * sim[:, 1], 2))
 
-        #loss3 = 2.2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
-        #loss3 = 1 - torch.mean(torch.abs(sim[:, 0] - sim[:, 1]))
-        return 1 * loss1 + 1 * loss2 + 1 * loss3 + 1 * loss4
+        # loss3 = 2.2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
+        # loss3 = 1 - torch.mean(torch.abs(sim[:, 0] - sim[:, 1]))
 
+        length = len(sim)
+        loss1 = 1 - torch.mean(sim[0:length / 2 - 1])
+        loss2 = 1 + torch.mean(sim[length / 2:length - 1])
+        loss3 = 2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
 
+        return 1 * loss1 + 1 * loss2 + 1 * loss3
 
 
 #
@@ -151,11 +152,11 @@ class N_pair_loss(torch.nn.Module):
     def __init__(self):
         super(N_pair_loss, self).__init__()
 
-    def forward(self, sim_0,sim_1):
+    def forward(self, sim_0, sim_1):
         bn = sim_0.size()[0]
         loss1 = torch.mean(torch.diag(sim_1))
         sim_0 = sim_0 - torch.diag(torch.diag(sim_0))
-        #loss2 = torch.mean(torch.max(sim,dim=1)[0])
-        loss2 = torch.mean(torch.mean(sim_0,dim=1),dim=0)
+        # loss2 = torch.mean(torch.max(sim,dim=1)[0])
+        loss2 = torch.mean(torch.mean(sim_0, dim=1), dim=0)
 
         return loss1 + loss2
