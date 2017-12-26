@@ -110,10 +110,13 @@ class conv_loss_dqy(torch.nn.Module):
     def forward(self, sim, label):
         length = len(sim[:, 1])
         loss1 = torch.mean(torch.pow((1 - label) * sim[:, 1], 2))
-        loss2 = torch.mean(torch.pow(label * sim[:, 0], 2))
+        loss2 = 1 - torch.mean(torch.pow((1 - label) * sim[:, 0], 2))
+        loss3 = torch.mean(torch.pow(label * sim[:, 0], 2))
+        loss4 = 1 - torch.mean(torch.pow(label * sim[:, 1], 2))
+
         #loss3 = 2.2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
         #loss3 = 1 - torch.mean(torch.abs(sim[:, 0] - sim[:, 1]))
-        return 1 * loss1 + 1 * loss2
+        return 1 * loss1 + 1 * loss2 + 1 * loss3 + 1 * loss4
 
 
 
