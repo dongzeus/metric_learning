@@ -16,9 +16,9 @@ momentum: 0.9
 weight_decay: 0.0001
 max_epochs: 200
 print_freq: 5
-epoch_save: 10
-epoch_plot: 5
-epoch_test: 5
+epoch_save: 100
+epoch_plot: 10
+epoch_test: 10
 checkpoint_folder: ./checkpoints
 prefix: 'VA_METRIC'
 model: ''
