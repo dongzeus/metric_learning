@@ -68,7 +68,7 @@ print('Random Seed: {0}'.format(opt.manualSeed))
 
 
 # training function for metric learning
-def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loader, test_audio_loader, opts_test):
+def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_loader, test_audio_loader, opts_test):
     """
     train for one epoch on the training set
     """
@@ -80,12 +80,12 @@ def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loade
 
     end = time.time()
 
-    global dis1_rec
-    global dis2_rec
+    global positive_rec
+    global negative_rec
     global loss_rec
 
     for i, (vfeat, afeat) in enumerate(train_loader):
-        #shuffling the index orders
+        # shuffling the index orders
         bz = vfeat.size()[0]
         orders = np.arange(bz).astype('int32')
         shuffle_orders = orders.copy()
@@ -127,8 +127,13 @@ def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loade
             vfeat_var = vfeat_var.cuda()
             afeat_var = afeat_var.cuda()
             target_var = target_var.cuda()
-        sim,dis1,dis2 = model(vfeat_var,afeat_var)
-        loss = criterion(sim,target_var)
+        sim = model(vfeat_var, afeat_var)
+        loss = criterion(sim, target_var)
+
+        loss_rec.append(list(loss.data)[0])
+        positive_rec.append(list(torch.mean(sim[0:bz / 2 - 1, 0]).data)[0])
+        negative_rec.append(list(torch.mean(sim[bz / 2:bz - 1, 0]).data)[0])
+
         # ##### for N pair loss
         # vfeat = Variable(vfeat)
         # afeat = Variable(afeat)
@@ -156,7 +161,6 @@ def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loade
         # record the loss and distance to plot later
         # dis1_rec.append(list(dis1.data)[0])
         # dis2_rec.append(list(dis2.data)[0])
-        loss_rec.append(list(loss.data)[0])
 
         ##############################
         # update loss in the loss meter
@@ -187,7 +191,6 @@ def train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loade
     evaluate.test(test_video_loader, test_audio_loader, model, opts_test)
 
 
-
 def main():
     global opt
     # train data loader
@@ -203,7 +206,7 @@ def main():
 
     # Contrastive Loss
     criterion = models.conv_loss_dqy()
-    #criterion = models.N_pair_loss()
+    # criterion = models.N_pair_loss()
 
     if opt.cuda:
         print('shift model and criterion to GPU .. ')
@@ -224,13 +227,13 @@ def main():
 
     resume_epoch = 0
 
-    global dis1_rec
-    global dis2_rec
+    global positive_rec
+    global negative_rec
     global loss_rec
 
     loss_rec = []
-    dis1_rec = []
-    dis2_rec = []
+    positive_rec = []
+    negative_rec = []
 
     ######### to test each epoch
     parser = OptionParser()
@@ -250,12 +253,12 @@ def main():
 
     ########
 
-# another test for git
+    # another test for git
     for epoch in range(resume_epoch, opt.max_epochs):
         #################################
         # train for one epoch
         #################################
-        train(train_loader, model, criterion, optimizer, epoch, opt,test_video_loader, test_audio_loader, opts_test)
+        train(train_loader, model, criterion, optimizer, epoch, opt, test_video_loader, test_audio_loader, opts_test)
         scheduler.step()
 
         ##################################
@@ -266,17 +269,17 @@ def main():
         if ((epoch + 1) % opt.epoch_save) == 0:
             path_checkpoint = '{0}/{1}_state_epoch{2}.pth'.format(opt.checkpoint_folder, opt.prefix, epoch + 1)
             utils.save_checkpoint(model.state_dict(), path_checkpoint)
-
-    plt.figure(1)
-    plt.subplot(1, 2, 1)
-    plt.plot(loss_rec)
-    plt.legend('loss')
-    plt.subplot(1, 2, 2)
-    plt.plot(dis1_rec)
-    plt.plot(dis2_rec)
-    plt.legend(('distance between positives', 'distance between negatives'))
-    plt.show()
-    plt.savefig("./figures/conv.jpg")
+        if ((epoch + 1) % opt.epoch_plot) == 0:
+            plt.figure(1)
+            plt.subplot(1, 2, 1)
+            plt.plot(loss_rec)
+            plt.legend('loss')
+            plt.subplot(1, 2, 2)
+            plt.plot(positive_rec)
+            plt.plot(negative_rec)
+            plt.legend(('simmilarity of positives', 'simmilarity of negatives'))
+            plt.show()
+            plt.savefig('./figures/result{0}.jpg'.format(epoch + 1))
 
 
 if __name__ == '__main__':

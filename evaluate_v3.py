@@ -74,7 +74,7 @@ def test(video_loader, audio_loader, model, opt):
                 if opt.cuda:
                     vfeat_var = vfeat_var.cuda()
                     afeat_var = afeat_var.cuda()
-                cur_sim, dis1, dis2 = model(vfeat_var, afeat_var)
+                cur_sim = model(vfeat_var, afeat_var)
                 cur_sim = cur_sim[:, 0]
                 cur_sim_np = cur_sim.cpu().data.numpy()
                 cur_sim_np = np.reshape(cur_sim_np, (bz, 1))
