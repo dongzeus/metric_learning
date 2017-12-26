@@ -16,10 +16,10 @@ class FeatLSTM(nn.Module):
         self.lstm2 = nn.LSTMCell(hidden_size, out_size)
 
     def forward(self, feats):
-        h_t = Variable(torch.zeros(feats.size(0), self.hidden_size).float(), requires_grad=False)
-        c_t = Variable(torch.zeros(feats.size(0), self.hidden_size).float(), requires_grad=False)
-        h_t2 = Variable(torch.zeros(feats.size(0), self.out_size).float(), requires_grad=False)
-        c_t2 = Variable(torch.zeros(feats.size(0), self.out_size).float(), requires_grad=False)
+        h_t = Variable(torch.zeros(feats.size(0), self.hidden_size).float(), requires_grad=True)
+        c_t = Variable(torch.zeros(feats.size(0), self.hidden_size).float(), requires_grad=True)
+        h_t2 = Variable(torch.zeros(feats.size(0), self.out_size).float(), requires_grad=True)
+        c_t2 = Variable(torch.zeros(feats.size(0), self.out_size).float(), requires_grad=True)
 
         if feats.is_cuda:
             h_t = h_t.cuda()
