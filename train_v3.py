@@ -44,8 +44,13 @@ if not os.path.exists(opt.checkpoint_folder):
     os.system('mkdir {0}'.format(opt.checkpoint_folder))
 
 train_dataset = VideoFeatDataset(root=opt.data_dir, flist=opt.flist, test_list=opt.test_flist, test_number=opt.test_number)
+
+
 # =================== creat test set before import evaluate ===================
 import evaluate_new as evaluate
+# =================== creat test set before import evaluate ===================
+
+
 
 print('number of train samples is: {0}'.format(len(train_dataset)))
 print('finished loading data')
