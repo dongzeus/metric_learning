@@ -5,7 +5,6 @@ import torch.nn.functional as F
 import numpy as np
 
 
-# test for git
 
 class FeatLSTM(nn.Module):
     def __init__(self, input_size=1024, hidden_size=128, out_size=128):
@@ -47,16 +46,16 @@ class VAMetric_conv(nn.Module):
         self.vLSTM = FeatLSTM(1024, 512, 128)
         self.aLSTM = FeatLSTM(128, 128, 128)
 
-        # self.vfc1 = nn.Linear(in_features=1024, out_features=512)
-        # self.vfc2 = nn.Linear(in_features=512, out_features=128)
-        # self.afc1 = nn.Linear(in_features=128, out_features=128)
-        # self.afc2 = nn.Linear(in_features=128, out_features=128)
+        self.vfc1 = nn.Linear(in_features=1024, out_features=512)
+        self.vfc2 = nn.Linear(in_features=512, out_features=128)
+        self.afc1 = nn.Linear(in_features=128, out_features=128)
+        self.afc2 = nn.Linear(in_features=128, out_features=128)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128), stride=128)  # output bn*32*120
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn*32*120
         # self.mp = nn.MaxPool1d(kernel_size=4)
         self.dp = nn.Dropout(0.5)
         self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=8, stride=1)  # output bn*32*113
-        self.fc3 = nn.Linear(in_features=32 * 113, out_features=4096)
+        self.fc3 = nn.Linear(in_features=32 * 120, out_features=4096)
         self.fc4 = nn.Linear(in_features=4096, out_features=1024)
         self.fc5 = nn.Linear(in_features=1024, out_features=2)
         self.fc6 = nn.Linear(in_features=128, out_features=2)
@@ -71,13 +70,13 @@ class VAMetric_conv(nn.Module):
 
     def forward(self, vfeat, afeat):
 
-        vfeat = self.vLSTM(vfeat)
-        afeat = self.aLSTM(afeat)
+        # vfeat = self.vLSTM(vfeat)
+        # afeat = self.aLSTM(afeat)
 
-        # vfeat = self.vfc1(vfeat)
-        # vfeat = F.relu(vfeat)
-        # vfeat = self.vfc2(vfeat)
-        # vfeat = F.relu(vfeat)
+        vfeat = self.vfc1(vfeat)
+        vfeat = F.relu(vfeat)
+        vfeat = self.vfc2(vfeat)
+        vfeat = F.relu(vfeat)
 
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
         afeat = afeat.view(afeat.size(0), 1, 1, -1)
@@ -85,8 +84,8 @@ class VAMetric_conv(nn.Module):
         vafeat = torch.cat((vfeat, afeat), dim=2)
         vafeat = self.conv1(vafeat)
         vafeat = self.dp(vafeat)
-        vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
-        vafeat = self.conv2(vafeat)
+        # vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
+        # vafeat = self.conv2(vafeat)
         vafeat = self.dp(vafeat)
         vafeat = vafeat.view([vafeat.size(0), -1])
         vafeat = self.fc3(vafeat)
