@@ -48,6 +48,7 @@ else:
 
 # test function for metric learning
 def test(video_loader, audio_loader, model, opt):
+    pass
     """
     train for one epoch on the training set
     """
