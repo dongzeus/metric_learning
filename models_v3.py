@@ -84,7 +84,7 @@ class VAMetric_conv(nn.Module):
 
         vafeat = torch.cat((vfeat, afeat), dim=2)
         vafeat = self.conv1(vafeat)
-        #vafeat = self.dp(vafeat)
+        vafeat = self.dp(vafeat)
         vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
         vafeat = self.conv2(vafeat)
 
