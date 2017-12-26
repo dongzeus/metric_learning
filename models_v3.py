@@ -47,10 +47,10 @@ class VAMetric_conv(nn.Module):
         self.vLSTM = FeatLSTM(1024, 512, 128)
         self.aLSTM = FeatLSTM(128, 128, 128)
 
-        self.vfc1 = nn.Linear(in_features=1024, out_features=512)
-        self.vfc2 = nn.Linear(in_features=512, out_features=128)
-        self.afc1 = nn.Linear(in_features=128, out_features=128)
-        self.afc2 = nn.Linear(in_features=128, out_features=128)
+        # self.vfc1 = nn.Linear(in_features=1024, out_features=512)
+        # self.vfc2 = nn.Linear(in_features=512, out_features=128)
+        # self.afc1 = nn.Linear(in_features=128, out_features=128)
+        # self.afc2 = nn.Linear(in_features=128, out_features=128)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128), stride=128)  # output bn*32*120
         # self.mp = nn.MaxPool1d(kernel_size=4)
@@ -71,13 +71,13 @@ class VAMetric_conv(nn.Module):
 
     def forward(self, vfeat, afeat):
 
-        # vfeat = self.vLSTM(vfeat)
-        # afeat = self.aLSTM(afeat)
+        vfeat = self.vLSTM(vfeat)
+        afeat = self.aLSTM(afeat)
 
-        vfeat = self.vfc1(vfeat)
-        vfeat = F.relu(vfeat)
-        vfeat = self.vfc2(vfeat)
-        vfeat = F.relu(vfeat)
+        # vfeat = self.vfc1(vfeat)
+        # vfeat = F.relu(vfeat)
+        # vfeat = self.vfc2(vfeat)
+        # vfeat = F.relu(vfeat)
 
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
         afeat = afeat.view(afeat.size(0), 1, 1, -1)
