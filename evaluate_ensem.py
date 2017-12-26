@@ -105,7 +105,7 @@ def test(video_loader, audio_loader, model_ls, opt):
             order = topk[:, k]
             if k in order:
                 right = right + 1
-        print('The No.{} similarity matrix: \n {.3f}'.format(num,sim_mat))
+        print('The No.{} similarity matrix: \n {}'.format(num,sim_mat))
         print('No.{} testing accuracy (top{}): {:.3f}'.format(num,opt.topk, right / sample_num))
 
         if num == 0:

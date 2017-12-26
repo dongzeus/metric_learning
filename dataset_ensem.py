@@ -20,6 +20,7 @@ class VideoFeatDataset(data.Dataset):
             for i in range(len(self.pathlist)):
                 new_ls.append(self.pathlist[random.randint(0, length-1)])
             self.pathlist = new_ls
+            print 'Dataset Bagging.'
 
     def __getitem__(self, index):
         path = os.path.join(self.root, self.pathlist[index])

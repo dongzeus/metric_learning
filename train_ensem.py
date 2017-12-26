@@ -281,9 +281,9 @@ def main():
         # train for one epoch
         #################################
         for i in range(opt.model_number):
-            train(train_loader=tl_ls[i], model=model_ls[i], criterion=criterion, optimizer=opt_ls[i], epoch=epoch+1, opt=opt, num=i+1)
+            train(train_loader=tl_ls[i], model=model_ls[i], criterion=criterion, optimizer=opt_ls[i], epoch=epoch + 1,
+                  opt=opt, num=i + 1)
             scheduler_ls[i].step()
-
         ##################################
         # save checkpoints
         ##################################
@@ -292,8 +292,9 @@ def main():
         if ((epoch + 1) % opt.epoch_save) == 0:
             for i in range(opt.model_number):
                 path_checkpoint = '{0}/{1}_state_epoch{2}_model{3}.pth'.format(opt.checkpoint_folder, opt.prefix,
-                                                                               epoch + 1, i)
+                                                                               epoch + 1, i + 1)
                 utils.save_checkpoint(model_ls[i].state_dict(), path_checkpoint)
+
         if ((epoch + 1) % opt.epoch_plot) == 0:
             plt.figure(1)
             plt.subplot(1, 2, 1)
