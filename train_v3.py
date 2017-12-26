@@ -218,8 +218,8 @@ def main():
     #                      momentum=opt.momentum,
     #                      weight_decay=opt.weight_decay)
 
-    optimizer = optim.Adam(model.parameters(), lr=opt.lr)
-    # optimizer = optim.SGD(model.parameters(), lr=opt.lr, weight_decay=opt.weight_decay, momentum=opt.momentum)
+    #optimizer = optim.Adam(model.parameters(), lr=opt.lr)
+    optimizer = optim.SGD(model.parameters(), lr=opt.lr, weight_decay=opt.weight_decay, momentum=opt.momentum)
     # optimizer = optim.Adadelta(params=model.parameters(), lr=opt.lr)
     # adjust learning rate every lr_decay_epoch
     lambda_lr = lambda epoch: opt.lr_decay ** ((epoch + 1) // opt.lr_decay_epoch)  # poly policy
