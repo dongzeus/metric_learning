@@ -52,7 +52,7 @@ class VAMetric_conv(nn.Module):
         self.afc1 = nn.Linear(in_features=128, out_features=128)
         self.afc2 = nn.Linear(in_features=128, out_features=128)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128), stride=128)  # output bn*32*120
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn*32*120
         # self.mp = nn.MaxPool1d(kernel_size=4)
         self.dp = nn.Dropout(0.2)
         self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=8, stride=1)  # output bn*32*113
@@ -84,7 +84,7 @@ class VAMetric_conv(nn.Module):
 
         vafeat = torch.cat((vfeat, afeat), dim=2)
         vafeat = self.conv1(vafeat)
-        vafeat = self.dp(vafeat)
+        #vafeat = self.dp(vafeat)
         vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
         vafeat = self.conv2(vafeat)
 
@@ -119,7 +119,7 @@ class conv_loss_dqy(torch.nn.Module):
         loss2 = 1 + torch.mean(sim[length / 2:length - 1])
         loss3 = 2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
 
-        return 1 * loss1 + 1 * loss2 + 1 * loss3
+        return 1 * loss1 + 1 * loss2 + 2 * loss3
 
 
 #
