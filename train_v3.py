@@ -15,7 +15,7 @@ from torch.autograd import Variable
 from torch.optim.lr_scheduler import LambdaLR as LR_Policy
 
 import models_v3 as models
-import evaluate_new as evaluate
+import evaluate_v3 as evaluate
 from dataset import VideoFeatDataset
 from tools.config_tools import Config
 from tools import utils
