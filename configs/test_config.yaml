@@ -1,11 +1,12 @@
-cuda: True
+#cuda: True
+cuda: False
 ngpu: 1
 gpu_id: '0'
 data_dir: ../Train     # Your dataset path
 video_flist: './filelists/Video_Name_List.txt'
 audio_flist: './filelists/Audio_Name_List.txt'
 workers: 4
-batchSize: 100
+batchSize: 50
 checkpoint_folder: ./checkpoints
-init_model: './checkpoints/VA_METRIC_state_epoch35.pth'
+init_model: './checkpoints/VA_METRIC_state_epoch1.pth'
 topk: 5
