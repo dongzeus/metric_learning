@@ -119,8 +119,8 @@ class conv_loss_dqy(torch.nn.Module):
         # loss2 = 1 + torch.mean(sim[length / 2:length - 1])
         # loss3 = 2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
         #
-        print(list(loss1.data)[0],list(loss3.data)[0])
-        return 1 * loss1 + 1 * loss3
+        print(list(loss1.data)[0],list(loss2.data)[0],list(loss3.data)[0],list(loss4.data)[0])
+        return loss1 + loss2 + loss3 + loss4
 
 
 #
