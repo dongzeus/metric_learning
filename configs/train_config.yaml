@@ -5,12 +5,12 @@ gpu_id: '0'
 data_dir: ../Train       # replace it as your data path
 flist: './filelists/train_filelist.txt'
 test_flist: './filelists/test_Name_List.txt'
-test_number: 30
+test_number: 50
 workers: 4
 batchSize: 64
 manualSeed: 
 adam: True
-lr: 0.0005
+lr: 0.001
 lr_decay: 0.85
 lr_decay_epoch: 5
 momentum: 0.9
