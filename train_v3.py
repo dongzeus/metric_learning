@@ -131,8 +131,8 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, test_video_load
         loss = criterion(sim, target_var)
 
         loss_rec.append(list(loss.data)[0])
-        positive_rec.append(list(torch.mean(sim[0:bz / 2 - 1, 0]).data)[0])
-        negative_rec.append(list(torch.mean(sim[bz / 2:bz - 1, 0]).data)[0])
+        positive_rec.append(list(torch.mean(sim[0:bz - 1]).data)[0])
+        negative_rec.append(list(torch.mean(sim[bz:bz*2 - 1]).data)[0])
 
         # ##### for N pair loss
         # vfeat = Variable(vfeat)
