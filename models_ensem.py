@@ -43,8 +43,8 @@ class VAMetric_conv(nn.Module):
     def __init__(self, framenum=120):
         super(VAMetric_conv, self).__init__()
 
-        self.vLSTM = FeatLSTM(1024, 512, 128)
-        self.aLSTM = FeatLSTM(128, 128, 128)
+        # self.vLSTM = FeatLSTM(1024, 512, 128)
+        # self.aLSTM = FeatLSTM(128, 128, 128)
 
         self.vfc1 = nn.Linear(in_features=1024, out_features=512)
         self.vfc2 = nn.Linear(in_features=512, out_features=128)
@@ -70,13 +70,13 @@ class VAMetric_conv(nn.Module):
 
     def forward(self, vfeat, afeat):
 
-        vfeat = self.vLSTM(vfeat)
-        afeat = self.aLSTM(afeat)
+        # vfeat = self.vLSTM(vfeat)
+        # afeat = self.aLSTM(afeat)
 
-        # vfeat = self.vfc1(vfeat)
-        # vfeat = F.relu(vfeat)
-        # vfeat = self.vfc2(vfeat)
-        # vfeat = F.relu(vfeat)
+        vfeat = self.vfc1(vfeat)
+        vfeat = F.relu(vfeat)
+        vfeat = self.vfc2(vfeat)
+        vfeat = F.relu(vfeat)
 
         # afeat = self.afc1(afeat)
         # afeat = F.relu(afeat)
@@ -91,7 +91,6 @@ class VAMetric_conv(nn.Module):
         vafeat = self.dp(vafeat)
         vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
         vafeat = self.conv2(vafeat)
-        vafeat = self.dp(vafeat)
         vafeat = vafeat.view([vafeat.size(0), -1])
         vafeat = self.fc3(vafeat)
         vafeat = F.relu(vafeat)
