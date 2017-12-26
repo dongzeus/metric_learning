@@ -71,7 +71,7 @@ def test(video_loader, audio_loader, model, opt):
         for j, afeat in enumerate(audio_loader):
             for k in np.arange(bz):
                 cur_vfeat = vfeat[k].clone()
-                cur_vfeats = cur_vfeat.repeat(afeat.size()[0], 1, 1)
+                cur_vfeats = cur_vfeat.repeat(bz, 1, 1)
 
                 vfeat_var = Variable(cur_vfeats, volatile=True)
                 afeat_var = Variable(afeat, volatile=True)
@@ -81,7 +81,7 @@ def test(video_loader, audio_loader, model, opt):
 
                 cur_sim = model(vfeat_var, afeat_var)
                 cur_sim = cur_sim[:, 0].clone()
-                cur_sim = cur_sim.resize(afeat.size()[0], 1)
+                cur_sim = cur_sim.resize(bz, 1)
                 if k == 0:
                     bz_sim = cur_sim.clone()
                 else:
