@@ -78,6 +78,11 @@ class VAMetric_conv(nn.Module):
         vfeat = self.vfc2(vfeat)
         vfeat = F.relu(vfeat)
 
+        afeat = self.afc1(afeat)
+        afeat = F.relu(vfeat)
+        afeat = self.afc2(afeat)
+        afeat = F.relu(afeat)
+
         vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
         afeat = afeat.view(afeat.size(0), 1, 1, -1)
 
