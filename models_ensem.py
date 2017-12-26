@@ -92,7 +92,6 @@ class VAMetric_conv(nn.Module):
         vafeat = F.relu(vafeat)
         vafeat = self.fc4(vafeat)
 
-
         result = F.softmax(vafeat)
 
         return result
