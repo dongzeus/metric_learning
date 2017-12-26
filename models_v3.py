@@ -57,7 +57,7 @@ class VAMetric_conv(nn.Module):
         self.dp = nn.Dropout(0.2)
         self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)  # output bn*32*113
         self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
-        self.fc4 = nn.Linear(in_features=1024, out_features=1)
+        self.fc4 = nn.Linear(in_features=1024, out_features=2)
         self.fc5 = nn.Linear(in_features=512, out_features=128)
         self.fc6 = nn.Linear(in_features=128, out_features=2)
         self.init_params()
@@ -93,7 +93,7 @@ class VAMetric_conv(nn.Module):
         vafeat = F.relu(vafeat)
         vafeat = self.fc4(vafeat)
 
-        result = F.tanh(vafeat)
+        result = F.softmax(vafeat)
 
         return result
 
@@ -105,22 +105,22 @@ class conv_loss_dqy(torch.nn.Module):
         super(conv_loss_dqy, self).__init__()
 
     def forward(self, sim, label):
-        # length = len(sim[:, 1])
-        # loss1 = torch.mean(torch.pow((1 - label) * sim[:, 1], 2))
-        # loss2 = 1 - torch.mean(torch.pow((1 - label) * sim[:, 0], 2))
-        # loss3 = torch.mean(torch.pow(label * sim[:, 0], 2))
-        # loss4 = 1 - torch.mean(torch.pow(label * sim[:, 1], 2))
+        length = len(sim[:, 1])
+        loss1 = torch.mean(torch.pow((1 - label) * sim[:, 1], 2))
+        loss2 = 1 - torch.mean(torch.pow((1 - label) * sim[:, 0], 2))
+        loss3 = torch.mean(torch.pow(label * sim[:, 0], 2))
+        loss4 = 1 - torch.mean(torch.pow(label * sim[:, 1], 2))
 
         # loss3 = 2.2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
         # loss3 = 1 - torch.mean(torch.abs(sim[:, 0] - sim[:, 1]))
 
-        length = len(sim)
-        loss1 = 1 - torch.mean(sim[0:length / 2 - 1])
-        loss2 = 1 + torch.mean(sim[length / 2:length - 1])
-        loss3 = 2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
-
-        print(list(loss1.data)[0],list(loss2.data)[0],list(loss3.data)[0])
-        return 1 * loss1 + 1 * loss2 + 2 * loss3
+        # length = len(sim)
+        # loss1 = 1 - torch.mean(sim[0:length / 2 - 1])
+        # loss2 = 1 + torch.mean(sim[length / 2:length - 1])
+        # loss3 = 2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
+        #
+        # print(list(loss1.data)[0],list(loss2.data)[0],list(loss3.data)[0])
+        return (1 * loss1 + 1 * loss2 + 1 * loss3 + 1 * loss4)/2
 
 
 #
