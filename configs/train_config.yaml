@@ -5,7 +5,7 @@ gpu_id: '0'
 data_dir: ../Train       # replace it as your data path
 flist: './filelists/train_filelist.txt'
 test_flist: './filelists/test_Name_List.txt'
-test_number: 120
+test_number: 100
 workers: 4
 batchSize: 64
 manualSeed: 
@@ -15,7 +15,7 @@ lr_decay: 0.85
 lr_decay_epoch: 5
 momentum: 0.9
 weight_decay: 0.001
-max_epochs: 0
+max_epochs: 100
 print_freq: 5
 epoch_save: 10
 epoch_plot: 20
