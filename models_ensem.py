@@ -193,6 +193,6 @@ class Topk_loss(torch.nn.Module):
                 except Exception:
                     loss1 = sim_1[i, i]
         sim_0 = sim_0 - torch.diag(torch.diag(sim_0))
-        loss2 = torch.mean(torch.max(sim_0, dim=1)[0])
+        loss2 = torch.mean(torch.max(sim_0, dim=1))
 
         return loss1 + loss2
