@@ -183,16 +183,19 @@ class Topk_loss(torch.nn.Module):
     def forward(self, sim_0, sim_1, k=5):
         bn = sim_0.size()[0]
 
-        loss3 = 0.5 - torch.mean(torch.diag(sim_0) - torch.diag(sim_1))
+        loss3 = 1 - torch.mean(torch.diag(sim_0) - torch.diag(sim_1))
         sort, indices = torch.sort(sim_0, dim=1, descending=True)
         np_indices = indices.cpu().data.numpy()
         topk = np_indices[:, 0:k - 1]
+        wrong = 0
         for i in range(bn):
             if i not in topk[i, :]:
+                wrong += 1
                 try:
                     loss1 += sim_1[i, i]
                 except Exception:
                     loss1 = sim_1[i, i]
+        loss1 = loss1 / wrong
         sim_0 = sim_0 - torch.diag(torch.diag(sim_0))
         loss2 = torch.mean(torch.max(sim_0, dim=1)[0])
 
