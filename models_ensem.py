@@ -200,4 +200,4 @@ class Topk_loss(torch.nn.Module):
         loss2 = torch.mean(torch.max(sim_0, dim=1)[0])
 
         print list(loss1.data)[0], list(loss2.data)[0], list(loss3.data)[0]
-        return loss1 + 1.5 * loss2 + 0.5 * loss3
+        return 5 * loss1 + 1 * loss2 + 1 * loss3
