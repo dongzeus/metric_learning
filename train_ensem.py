@@ -244,10 +244,10 @@ def main():
 
     opt_ls = []
     for m in model_ls:
-        op = optim.Adam(m.parameters(), lr=opt.lr)
-        # op = optim.SGD(m.parameters(), lr=opt.lr,
-        #                momentum=opt.momentum,
-        #                weight_decay=opt.weight_decay)
+        # op = optim.Adam(m.parameters(), lr=opt.lr)
+        op = optim.SGD(m.parameters(), lr=opt.lr,
+                       momentum=opt.momentum,
+                       weight_decay=opt.weight_decay)
         opt_ls.append(op)
 
     # optimizer = optim.SGD(model.parameters(), lr=opt.lr, weight_decay=opt.weight_decay, momentum=opt.momentum)

@@ -196,4 +196,5 @@ class Topk_loss(torch.nn.Module):
         sim_0 = sim_0 - torch.diag(torch.diag(sim_0))
         loss2 = torch.mean(torch.max(sim_0, dim=1)[0])
 
+        print loss1,loss2,loss3
         return loss1 + loss2 + 0.5 * loss3
