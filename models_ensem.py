@@ -5,7 +5,6 @@ import torch.nn.functional as F
 import numpy as np
 
 
-
 class FeatLSTM(nn.Module):
     def __init__(self, input_size=1024, hidden_size=128, out_size=128):
         super(FeatLSTM, self).__init__()
@@ -173,5 +172,27 @@ class N_pair_loss(torch.nn.Module):
         sim_0 = sim_0 - torch.diag(torch.diag(sim_0))
         # loss2 = torch.mean(torch.max(sim,dim=1)[0])
         loss2 = torch.mean(torch.mean(sim_0, dim=1), dim=0)
+
+        return loss1 + loss2
+
+
+class Topk_loss(torch.nn.Module):
+    def __init__(self):
+        super(Topk_loss, self).__init__()
+
+    def forward(self, sim_0, sim_1, k=5):
+        bn = sim_0.size()[0]
+        # loss1 = torch.mean(torch.diag(sim_1))
+        sort, indices = torch.sort(sim_0, dim=1, descending=True)
+        np_indices = indices.cpu().data.numpy()
+        topk = np_indices[:, 0:k-1]
+        for i in range(bn):
+            if i not in topk[i, :]:
+                try:
+                    loss1 += sim_1[i, i]
+                except Exception:
+                    loss1 = sim_1[i, i]
+        sim_0 = sim_0 - torch.diag(torch.diag(sim_0))
+        loss2 = torch.mean(torch.max(sim_0, dim=1)[0])
 
         return loss1 + loss2

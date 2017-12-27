@@ -5,7 +5,7 @@ gpu_id: '0'
 data_dir: ../Train       # replace it as your data path
 flist: './filelists/train_filelist.txt'
 test_flist: './filelists/test_Name_List.txt'
-test_number: 200
+test_number: 100
 workers: 4
 batchSize: 64
 manualSeed: 
@@ -26,4 +26,4 @@ model: ''
 gradient_clip: 0.01
 init_model: ''
 init_model_epoch: ''
-model_number: 10
+model_number: 1
