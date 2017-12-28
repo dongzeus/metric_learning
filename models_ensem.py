@@ -116,41 +116,41 @@ class VA_LSTM(nn.Module):
         self.fcva3 = nn.Linear(120, 1)
 
         self.fc1 = nn.Linear(128 * 2, 128 * 2)
-        self.fc2 = nn.Linear(128 * 2, 1)
-        self.fc3 = nn.Linear(128, 64)
+        self.fc2 = nn.Linear(128 * 2, 128)
+        self.fc3 = nn.Linear(120 * 128 * 2, 1)
 
     def forward(self, vfeat, afeat):
-        vafeat = torch.cat((vfeat, afeat), dim=2)
-        vafeat = self.va_lstm(vafeat)[0]
-        vafeat = F.relu(self.fcva1(vafeat))
-        vafeat = F.relu(self.fcva2(vafeat))
-        vafeat = vafeat.view(vafeat.size(0), 120)
-        vafeat = F.tanh(self.fcva3(vafeat))
-        # vafeat = F.relu(self.fcva3(vafeat))
+        # vafeat = torch.cat((vfeat, afeat), dim=2)
+        # vafeat = self.va_lstm(vafeat)[0]
+        # vafeat = F.relu(self.fcva1(vafeat))
+        # vafeat = F.relu(self.fcva2(vafeat))
+        # vafeat = vafeat.view(vafeat.size(0), 120)
+        # vafeat = F.tanh(self.fcva3(vafeat))
+        # # vafeat = F.relu(self.fcva3(vafeat))
 
 
-        # vfeat = self.v_lstm(vfeat)[0]
-        # afeat = self.a_lstm(afeat)[0]
-        #
-        # # vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
-        # # afeat = afeat.view(afeat.size(0), 1, 1, -1)
-        #
-        # vfeat = F.relu(self.fc1(vfeat))
-        # vfeat = F.relu(self.fc2(vfeat))
-        # vfeat = F.relu(self.fc3(vfeat))
-        #
-        # afeat = F.relu(self.fc1(afeat))
-        # afeat = F.relu(self.fc2(afeat))
-        # afeat = F.relu(self.fc3(afeat))
-        #
+        vfeat = self.v_lstm(vfeat)[0]
+        afeat = self.a_lstm(afeat)[0]
+
+        # vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
+        # afeat = afeat.view(afeat.size(0), 1, 1, -1)
+
+        vfeat = F.relu(self.fc1(vfeat))
+        vfeat = F.relu(self.fc2(vfeat))
+        vfeat = vfeat.view(vfeat.size(0), -1)
+
+        afeat = F.relu(self.fc1(afeat))
+        afeat = F.relu(self.fc2(afeat))
+        afeat = afeat.view(afeat.size(0), -1)
+
+        vafeat = torch.cat((vfeat, afeat), dim=1)
+        dis = self.fc3(vafeat)
+
         # vfeat = vfeat.view(vfeat.size(0), -1)
         # afeat = afeat.view(afeat.size(0), -1)
 
-        # dis = torch.norm((vfeat - afeat), p=2, dim=1)
 
-        sim = vafeat
-
-        return sim
+        return dis
 
 
 class metric_loss(nn.Module):
@@ -160,16 +160,12 @@ class metric_loss(nn.Module):
     def forward(self, dis, target, margin=1):
         bs = dis.size(0)
 
-        loss_nega = torch.pow(1 + torch.mean(target * dis), 2)
-        loss_posi = torch.pow(1 - torch.mean((1 - target) * dis), 2)
-
-        loss_balance = torch.pow(2 - (torch.mean(dis[0:bs / 2 - 1]) - torch.mean(dis[bs / 2:bs - 1])), 2)
-
-        loss = loss_posi + loss_nega + 1.5 * loss_balance
-
+        loss_posi = torch.mean((1 - target) * dis)
+        loss_nega = torch.mean(F.relu(margin - target * dis))
+        loss_balance = F.relu(0.5 - (torch.mean(dis[0:bs / 2 - 1]) - torch.mean(dis[bs / 2:bs - 1])))
         print list(loss_posi.data)[0], list(loss_nega.data)[0], list(loss_balance.data)[0]
 
-        return loss
+        return loss_posi + loss_nega + loss_balance
 
 
 class conv_loss_dqy(torch.nn.Module):
