@@ -103,8 +103,8 @@ class VAMetric_conv(nn.Module):
 class VA_LSTM(nn.Module):
     def __init__(self):
         super(VA_LSTM, self).__init__()
-        self.v_lstm = nn.LSTM(input_size=1024, hidden_size=128, num_layers=5, batch_first=True, bidirectional=False)
-        self.a_lstm = nn.LSTM(input_size=128, hidden_size=128, num_layers=5, batch_first=True, bidirectional=False)
+        self.v_lstm = nn.LSTM(input_size=1024, hidden_size=128, num_layers=5, batch_first=True, bidirectional=True)
+        self.a_lstm = nn.LSTM(input_size=128, hidden_size=128, num_layers=5, batch_first=True, bidirectional=True)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn*32*120
 
