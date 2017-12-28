@@ -106,13 +106,13 @@ class VA_LSTM(nn.Module):
         self.v_lstm = nn.LSTM(input_size=1024, hidden_size=128, num_layers=5, batch_first=True, bidirectional=True)
         self.a_lstm = nn.LSTM(input_size=128, hidden_size=128, num_layers=5, batch_first=True, bidirectional=True)
 
-        self.va_lstm = nn.LSTM(input_size=1152, hidden_size=1152, num_layers=5, batch_first=True, bidirectional=True,
+        self.va_lstm = nn.LSTM(input_size=1152, hidden_size=128, num_layers=2, batch_first=True, bidirectional=True,
                                dropout=0.2)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn*32*120
 
-        self.fcva1 = nn.Linear(in_features=1152 * 2, out_features=1152)
-        self.fcva2 = nn.Linear(1152, 1)
+        self.fcva1 = nn.Linear(in_features=128 * 2, out_features=128)
+        self.fcva2 = nn.Linear(128, 1)
         self.fcva3 = nn.Linear(120, 1)
 
         self.fc1 = nn.Linear(128 * 2, 128 * 2)
@@ -158,12 +158,16 @@ class metric_loss(nn.Module):
         super(metric_loss, self).__init__()
 
     def forward(self, dis, target, margin=1):
+        bs = dis.size(0)
         loss_nega = torch.mean(torch.pow(target * dis, 2))
         posi = margin - (1 - target) * dis
         loss_posi = torch.mean(torch.pow((torch.sign(posi) + 1) / 2 * posi, 2))
-        loss = loss_posi + loss_nega
 
-        print list(loss_posi.data)[0], list(loss_nega.data)[0]
+        loss_balance = 1 - torch.mean(dis[0:bs / 2 - 1] - dis[bs / 2:bs - 1])
+
+        loss = loss_posi + loss_nega + 1.5 * loss_balance
+
+        print list(loss_posi.data)[0], list(loss_nega.data)[0],list(loss_balance.data)[0]
 
         return loss
 
