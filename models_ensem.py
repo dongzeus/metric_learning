@@ -108,9 +108,9 @@ class VA_LSTM(nn.Module):
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn*32*120
 
-        self.fc1 = nn.Linear(128, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 128)
+        self.fc1 = nn.Linear(128 * 2, 128 *2)
+        self.fc2 = nn.Linear(128*2, 128)
+        self.fc3 = nn.Linear(128, 64)
 
     def forward(self, vfeat, afeat):
         vfeat = self.v_lstm(vfeat)[0]
