@@ -140,12 +140,12 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, num):
             vfeat_var = vfeat_var.cuda()
             afeat_var = afeat_var.cuda()
             target_var = target_var.cuda()
-        dis = model(vfeat_var, afeat_var)
-        loss = criterion(dis, target_var)
+        sim = model(vfeat_var, afeat_var)
+        loss = criterion(sim, target_var)
 
         loss_rec.append(list(loss.data)[0])
-        positive_rec.append(list(torch.mean(dis[0:bz - 1]).data)[0])
-        negative_rec.append(list(torch.mean(dis[bz:bz * 2 - 1]).data)[0])
+        positive_rec.append(list(torch.mean(sim[0:bz - 1]).data)[0])
+        negative_rec.append(list(torch.mean(sim[bz:bz * 2 - 1]).data)[0])
 
         # ##### for N pair loss
         # vfeat = Variable(vfeat)
