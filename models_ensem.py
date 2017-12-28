@@ -125,7 +125,7 @@ class VA_LSTM(nn.Module):
         vafeat = F.relu(self.fcva1(vafeat))
         vafeat = F.relu(self.fcva2(vafeat))
         vafeat = vafeat.view(vafeat.size(0), 120)
-        vafeat = F.relu(self.fcva3(vafeat))
+        vafeat = F.tanh(self.fcva3(vafeat))
         # vafeat = F.relu(self.fcva3(vafeat))
 
 
@@ -159,15 +159,15 @@ class metric_loss(nn.Module):
 
     def forward(self, dis, target, margin=1):
         bs = dis.size(0)
-        loss_nega = torch.mean(torch.pow(target * dis, 2))
-        posi = margin - (1 - target) * dis
-        loss_posi = torch.mean(torch.pow((torch.sign(posi) + 1) / 2 * posi, 2))
 
-        loss_balance = 1 - torch.mean(dis[0:bs / 2 - 1] - dis[bs / 2:bs - 1])
+        loss_nega = 1 + torch.mean(torch.pow(target * dis, 2))
+        loss_posi = 1 - torch.mean(torch.pow((1 - target) * dis, 2))
+
+        loss_balance = 2 - (torch.mean(dis[0:bs / 2 - 1]) - torch.mean(dis[bs / 2:bs - 1]))
 
         loss = loss_posi + loss_nega + 1.5 * loss_balance
 
-        print list(loss_posi.data)[0], list(loss_nega.data)[0],list(loss_balance.data)[0]
+        print list(loss_posi.data)[0], list(loss_nega.data)[0], list(loss_balance.data)[0]
 
         return loss
 
