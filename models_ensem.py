@@ -100,28 +100,49 @@ class VAMetric_conv(nn.Module):
         return result
 
 
-#
-# class conv_loss_dqy(torch.nn.Module):
-#     def __init__(self):
-#         super(conv_loss_dqy, self).__init__()
-#
-#     def forward(self, sim, label):
-#         length = len(sim[:, 1])
-#         loss1 = torch.mean((1 - label) * sim[:, 1])
-#         loss2 = 1 - torch.mean(torch.pow((1 - label) * sim[:, 0], 2))
-#         loss3 = torch.mean(label * sim[:, 0])
-#         loss4 = 1 - torch.mean(torch.pow(label * sim[:, 1], 2))
-#
-#         # loss3 = 2.2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
-#         # loss3 = 1 - torch.mean(torch.abs(sim[:, 0] - sim[:, 1]))
-#
-#         # length = len(sim)
-#         # loss1 = 1 - torch.mean(sim[0:length / 2 - 1])
-#         # loss2 = 1 + torch.mean(sim[length / 2:length - 1])
-#         # loss3 = 2 - (torch.mean(sim[0:length / 2 - 1]) - torch.mean(sim[length / 2:length - 1]))
-#         #
-#         print(list(loss1.data)[0],list(loss2.data)[0],list(loss3.data)[0],list(loss4.data)[0])
-#         return loss1 + 1.3*loss2 + loss3 + loss4
+class VA_LSTM(nn.Module):
+    def __init__(self, lstm_layers=5):
+        super(VA_LSTM, self).__init__()
+        self.v_lstm = nn.LSTM(input_size=1024, hidden_size=128, num_layers=5, batch_first=True, bidirectional=False)
+        self.a_lstm = nn.LSTM(input_size=128, hidden_size=128, num_layers=5, batch_first=True, bidirectional=False)
+        self.fc1 = nn.Linear(128, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(128, 128)
+
+    def forward(self, vfeat, afeat):
+        vfeat = self.v_lstm(vfeat)[0]
+        afeat = self.a_lstm(afeat)[0]
+
+        vfeat = F.relu(self.fc1(vfeat))
+        vfeat = F.relu(self.fc2(vfeat))
+        vfeat = F.relu(self.fc3(vfeat))
+
+        afeat = F.relu(self.fc1(afeat))
+        afeat = F.relu(self.fc2(afeat))
+        afeat = F.relu(self.fc3(afeat))
+
+        vfeat = vfeat.view(vfeat.size(0), -1)
+        afeat = afeat.view(afeat.size(0), -1)
+
+        dis = torch.norm((vfeat - afeat), p=2, dim=1)
+
+        return dis
+
+
+class metric_loss(nn.Module):
+    def __init__(self):
+        super(metric_loss, self).__init__()
+
+    def forward(self, dis, target, margin=1):
+        loss_posi = torch.mean(torch.pow((1 - target) * dis, 2))
+        nega = margin - target * dis
+        loss_nega = torch.mean(torch.pow((torch.sign(nega) + 1) / 2 * nega, 2))
+        loss = loss_posi + loss_nega
+
+        print list(loss_posi.data)[0], list(loss_nega.data)[0]
+
+        return loss
+
 
 class conv_loss_dqy(torch.nn.Module):
     def __init__(self):
@@ -136,32 +157,6 @@ class conv_loss_dqy(torch.nn.Module):
         return 1 * loss1 + 1 * loss2 + 0 * loss3
 
 
-#
-# class N_pair_loss(torch.nn.Module):
-#     def __init__(self):
-#         super(N_pair_loss, self).__init__()
-#
-#     def forward(self, dis, margin=1):
-#         bn = dis.size()[0]
-#         loss = 0
-#         for i in range(bn):
-#
-#             Dij = dis[i, i]
-#             Dik = dis[i, :].clone()
-#             Dik[i] = 0
-#             Djk = dis[:, i].clone()
-#             Djk[i] = 0
-#             margin_ = margin * torch.autograd.Variable(torch.ones(Dik.size())).cuda()
-#             loss_i = torch.log(torch.sum(torch.exp(margin_ - Dik) + torch.exp(margin_ - Djk), dim=0)) + Dij
-#             if torch.norm(loss_i, p=1).data[0] < 0:
-#                 continue
-#             else:
-#                 loss_i = torch.pow(loss_i, 2)
-#                 loss = loss + loss_i
-#         loss = loss / (2 * bn)
-#
-#         return loss
-#
 class N_pair_loss(torch.nn.Module):
     def __init__(self):
         super(N_pair_loss, self).__init__()
@@ -201,5 +196,5 @@ class Topk_loss(torch.nn.Module):
         loss2 = torch.mean(torch.max(sim_0, dim=1)[0])
 
         # print list(loss1.data)[0], list(loss2.data)[0]
-        print list(loss3.data)[0],list(loss4.data)[0]
+        print list(loss3.data)[0], list(loss4.data)[0]
         return 0 * loss1 + 0 * loss2 + 1 * loss3 + 1 * loss4
