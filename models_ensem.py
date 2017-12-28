@@ -116,9 +116,9 @@ class VA_LSTM(nn.Module):
         vfeat = self.v_lstm(vfeat)[0]
         afeat = self.a_lstm(afeat)[0]
 
-        vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
-        afeat = afeat.view(afeat.size(0), 1, 1, -1)
-
+        # vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
+        # afeat = afeat.view(afeat.size(0), 1, 1, -1)
+        
         vfeat = F.relu(self.fc1(vfeat))
         vfeat = F.relu(self.fc2(vfeat))
         vfeat = F.relu(self.fc3(vfeat))
