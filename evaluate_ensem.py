@@ -82,7 +82,7 @@ def test(video_loader, audio_loader, model_ls, opt):
                         afeat_var = afeat_var.cuda()
 
                     cur_sim = model(vfeat_var, afeat_var)
-                    cur_sim = cur_sim[:, 0].clone()
+                    #cur_sim = cur_sim[:, 0].clone()
                     cur_sim = cur_sim.resize(bz, 1)
                     if k == 0:
                         bz_sim = cur_sim.clone()
@@ -98,7 +98,7 @@ def test(video_loader, audio_loader, model_ls, opt):
                 sim_mat = torch.cat((sim_mat, slice_sim.clone()), 1)
 
         # if your metric is the feature distance, you should set descending=False, else if your metric is feature similarity, you should set descending=True
-        sorted, indices = torch.sort(sim_mat, 0, descending=True)
+        sorted, indices = torch.sort(sim_mat, 0, descending=False)
         np_indices = indices.cpu().data.numpy()
         topk = np_indices[:opt.topk, :]
         for k in np.arange(sample_num):
@@ -116,7 +116,7 @@ def test(video_loader, audio_loader, model_ls, opt):
         else:
             simmat_ensem = simmat_ensem + sim_mat
 
-    sorted, indices = torch.sort(simmat_ensem, 0, descending=True)
+    sorted, indices = torch.sort(simmat_ensem, 0, descending=False)
     np_indices = indices.cpu().data.numpy()
     topk = np_indices[:opt.topk, :]
     right = 0

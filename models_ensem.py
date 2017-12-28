@@ -101,10 +101,13 @@ class VAMetric_conv(nn.Module):
 
 
 class VA_LSTM(nn.Module):
-    def __init__(self, lstm_layers=5):
+    def __init__(self):
         super(VA_LSTM, self).__init__()
         self.v_lstm = nn.LSTM(input_size=1024, hidden_size=128, num_layers=5, batch_first=True, bidirectional=False)
         self.a_lstm = nn.LSTM(input_size=128, hidden_size=128, num_layers=5, batch_first=True, bidirectional=False)
+
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn*32*120
+
         self.fc1 = nn.Linear(128, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 128)
@@ -112,6 +115,9 @@ class VA_LSTM(nn.Module):
     def forward(self, vfeat, afeat):
         vfeat = self.v_lstm(vfeat)[0]
         afeat = self.a_lstm(afeat)[0]
+
+        vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
+        afeat = afeat.view(afeat.size(0), 1, 1, -1)
 
         vfeat = F.relu(self.fc1(vfeat))
         vfeat = F.relu(self.fc2(vfeat))
