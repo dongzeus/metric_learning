@@ -160,10 +160,10 @@ class metric_loss(nn.Module):
     def forward(self, dis, target, margin=1):
         bs = dis.size(0)
 
-        loss_nega = 1 + torch.mean(torch.pow(target * dis, 2))
-        loss_posi = 1 - torch.mean(torch.pow((1 - target) * dis, 2))
+        loss_nega = torch.pow(1 + torch.mean(target * dis), 2)
+        loss_posi = torch.pow(1 - torch.mean((1 - target) * dis), 2)
 
-        loss_balance = 2 - (torch.mean(dis[0:bs / 2 - 1]) - torch.mean(dis[bs / 2:bs - 1]))
+        loss_balance = torch.pow(2 - (torch.mean(dis[0:bs / 2 - 1]) - torch.mean(dis[bs / 2:bs - 1])), 2)
 
         loss = loss_posi + loss_nega + 1.5 * loss_balance
 
