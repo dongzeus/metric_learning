@@ -144,7 +144,7 @@ class VA_LSTM(nn.Module):
         afeat = afeat.view(afeat.size(0), -1)
 
         vafeat = torch.cat((vfeat, afeat), dim=1)
-        dis = self.fc3(vafeat)
+        dis = F.relu(self.fc3(vafeat))
 
         # vfeat = vfeat.view(vfeat.size(0), -1)
         # afeat = afeat.view(afeat.size(0), -1)
