@@ -8,17 +8,16 @@ USE_CUDA = True
 
 
 class Encoder(nn.Module):
-    def __init__(self, batch_size, num_layer=5, hidden_size=128):
+    def __init__(self, num_layer=5, hidden_size=128):
         super(Encoder, self).__init__()
 
         self.num_layer = num_layer
         self.hidden_size = hidden_size
-        self.bs = batch_size
         self.encoder = nn.GRU(input_size=1024, hidden_size=hidden_size, num_layers=self.num_layer, batch_first=True,
                               bidirectional=False)
 
-    def init_hidden(self):
-        bz = self.bs
+    def init_hidden(self, batch_size):
+        bz = batch_size
         hidden_0 = Variable(torch.nn.init.orthogonal(torch.zeros(self.num_layer, bz, self.hidden_size)))
         if USE_CUDA:
             hidden_0 = hidden_0.cuda()

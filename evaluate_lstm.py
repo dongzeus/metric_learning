@@ -71,44 +71,43 @@ def test(video_loader, audio_loader, model_ls, opt):
         for i, vfeat in enumerate(video_loader):
             bs = vfeat.size()[0]
             sample_num += bs
-            for j, afeat in enumerate(audio_loader):
-                for k in np.arange(bs):
-                    cur_vfeat = vfeat[k].clone()
-                    cur_vfeats = cur_vfeat.repeat(bs, 1, 1)
+            vfeat_var = Variable(vfeat, volatile=True)
+            if opt.cuda:
+                vfeat_var = vfeat_var.cuda()
+            encoder_hidden = encoder.init_hidden(batch_size=bs)
+            encoder_output, encoder_hidden = encoder(vfeat_var, encoder_hidden)
 
-                    vfeat_var = Variable(cur_vfeats, volatile=True)
-                    afeat_var = Variable(afeat, volatile=True)
-                    if opt.cuda:
-                        vfeat_var = vfeat_var.cuda()
-                        afeat_var = afeat_var.cuda()
-                    encoder_hidden = encoder.init_hidden()
-                    encoder_output, encoder_hidden = encoder(vfeat_var, encoder_hidden)
-                    decoder_hidden = encoder_hidden
-                    decoder_input = encoder_output[:, 119, :]  # bs * 128
-                    decoder_context = torch.mean(encoder_output, dim=1)  # bs * 128
+            decoder_hidden = encoder_hidden
+            decoder_input = encoder_output[:, 119, :]  # bs * 128
+            decoder_context = torch.mean(encoder_output, dim=1)  # bs * 128
 
-                    for seq in range(120):
-                        audio_output, decoder_context, decoder_hidden, attn_weights = decoder(decoder_input,
-                                                                                              decoder_context,
-                                                                                              decoder_hidden,
-                                                                                              encoder_output)
-                        decoder_input = audio_output
-                        if seq == 0:
-                            audio_gen = audio_output.view(bs, 1, -1).clone()
-                        else:
-                            audio_gen = torch.cat((audio_gen, audio_output.view(bs, 1, -1)), dim=1)
-
-                    sim = torch.nn.functional.cosine_similarity(audio_gen, afeat_var, dim=2)
-                    cur_sim = torch.mean(sim, dim=1)
-                    cur_sim = cur_sim.resize(bs, 1)
-                    if k == 0:
-                        bz_sim = cur_sim.clone()
-                    else:
-                        bz_sim = torch.cat((bz_sim, cur_sim.clone()), 1)
-                if j == 0:
-                    slice_sim = bz_sim.clone()
+            # Generate the audio from video feature
+            for seq in range(120):
+                audio_output, decoder_context, decoder_hidden, attn_weights = decoder(decoder_input, decoder_context,
+                                                                                      decoder_hidden, encoder_output)
+                decoder_input = audio_output
+                if seq == 0:
+                    audio_gen = audio_output.view(bs, 1, -1).clone()
                 else:
-                    slice_sim = torch.cat((slice_sim, bz_sim.clone()), 0)
+                    audio_gen = torch.cat((audio_gen, audio_output.view(bs, 1, -1)), dim=1)
+
+            # Compare the audio_gen with audio ground_truth
+            for j, afeat in enumerate(audio_loader):
+                afeat_var = Variable(afeat, volatile=True)
+                if opt.cuda:
+                    afeat_var = afeat_var.cuda()
+
+                sim = torch.nn.functional.cosine_similarity(audio_gen, afeat_var, dim=2)
+                cur_sim = torch.mean(sim, dim=1)
+                cur_sim = cur_sim.resize(bs, 1)
+                if k == 0:
+                    bz_sim = cur_sim.clone()
+                else:
+                    bz_sim = torch.cat((bz_sim, cur_sim.clone()), 1)
+            if j == 0:
+                slice_sim = bz_sim.clone()
+            else:
+                slice_sim = torch.cat((slice_sim, bz_sim.clone()), 0)
             if i == 0:
                 sim_mat = slice_sim.clone()
             else:

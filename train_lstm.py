@@ -120,7 +120,7 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
             target = target.cuda()
 
         # use video features to generate encoder_output and encoder_hidden (to be the initial hidden for decoder)
-        encoder_hidden = encoder.init_hidden()
+        encoder_hidden = encoder.init_hidden(batch_size=bs)
         encoder_output, encoder_hidden = encoder(vfeat, encoder_hidden)
 
         # decoder
