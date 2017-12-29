@@ -175,7 +175,7 @@ def main():
     # create model
     model_ls = []
     for i in range(opt.model_number):
-        encoder = models.Encoder(batch_size=opt.batchSize)
+        encoder = models.Encoder()
         decoder = models.AttnDecoder()
         model_ls.append([encoder, decoder])
 
