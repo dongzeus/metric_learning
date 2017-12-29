@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
 
-USE_CUDA = False
+USE_CUDA = True
 
 
 class VAMetric_conv(nn.Module):
@@ -69,120 +69,54 @@ class VAMetric_conv(nn.Module):
         return result
 
 
-class Encoder(nn.Module):
-    def __init__(self, num_layer=5, hidden_size=128):
-        super(Encoder, self).__init__()
+class VA_lstm(nn.Module):
+    def __init__(self, hidden_size=128, num_layers=4):
+        super(VA_lstm, self).__init__()
 
-        self.num_layer = num_layer
         self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.bidirection = True
+        self.num_direction = 1
+        if self.bidirection:
+            self.num_direction = 2
+        self.vafc = nn.Linear(in_features=1024 + 128, out_features=1024)
+        self.lstm = nn.LSTM(input_size=1024, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
+                            batch_first=True, bidirectional=self.bidirection)
+        self.fc1 = nn.Linear(in_features=self.hidden_size * self.num_direction, out_features=128)
+        self.fc2 = nn.Linear(in_features=128, out_features=1)
 
-        self.encoder = nn.GRU(input_size=1024, hidden_size=hidden_size, num_layers=self.num_layer, batch_first=True,
-                              bidirectional=False)
+    def forward(self, vfeat, afeat):
+        bs = vfeat.size(0)
+        vafeat = torch.cat((vfeat, afeat), dim=2)
+        vafeat = F.relu(self.vafc(vafeat))
+        lstm_output = self.lstm(vafeat, self.param_init(batch_size=bs))[0]
+        lstm_output = lstm_output[:, 119, :]
+        lstm_output = F.relu(self.fc1(lstm_output))
+        sim = F.tanh(self.fc2(lstm_output))
 
-    def init_hidden(self):
-        bz = 64
-        hidden_0 = Variable(torch.nn.init.orthogonal(torch.zeros(self.num_layer * 2, bz, 1024)))
+        return sim
+
+    def param_init(self, batch_size):
+        bs = batch_size
+        h_0 = Variable(torch.zeros(self.num_layers * self.num_direction, bs, self.hidden_size))
+        c_0 = Variable(torch.zeros(self.num_layers * self.num_direction, bs, self.hidden_size))
+        torch.nn.init.orthogonal(h_0)
+        torch.nn.init.orthogonal(c_0)
         if USE_CUDA:
-            hidden_0 = hidden_0.cuda()
-        return hidden_0
+            h_0 = h_0.cuda()
+            c_0 = c_0.cuda()
 
-    def forward(self, vfeat):
-        output, hidden = self.encoder(vfeat, self.init_hidden())
-
-        return output, hidden
+        return h_0, c_0
 
 
-class Attn(nn.Module):
-    def __init__(self, method='general', hidden_size=128):
-        super(Attn, self).__init__()
+class lstm_loss(nn.Module):
+    def __init__(self):
+        super(lstm_loss, self).__init__()
 
-        self.method = method
-        self.hidden_size = hidden_size
+    def forward(self, sim, target):
+        loss_posi = torch.mean(F.relu(0.9 - (1 - target) * sim))
+        loss_nega = torch.mean(F.relu(0.9 + target * sim))
+        loss = (loss_nega + loss_posi) / 2
 
-        if self.method == 'general':
-            self.attn = nn.Linear(self.hidden_size, hidden_size)
-
-        elif self.method == 'concat':
-            self.attn = nn.Linear(self.hidden_size * 2, hidden_size)
-            self.other = nn.Parameter(torch.FloatTensor(1, hidden_size))
-
-    def forward(self, hidden, encoder_outputs):
-        bs = encoder_outputs.size(0)
-        seq_len = encoder_outputs.size(1)
-
-        # Create variable to store attention energies
-        attn_energies = Variable(torch.zeros(bs, seq_len))  # B x 1 x S
-
-        if USE_CUDA:
-            attn_energies = attn_energies.cuda()
-
-        # Calculate energies for each encoder output
-        for i in range(seq_len):
-            attn_energies[:, i] = self.score(hidden, encoder_outputs[:, i, :])
-
-        # Normalize energies to weights in range 0 to 1, resize to 1 x 1 x seq_len
-        return F.softmax(attn_energies)
-
-    def score(self, hidden, encoder_output):
-
-        if self.method == 'dot':
-            energy = hidden.dot(encoder_output)
-            return energy
-
-        elif self.method == 'general':
-            energy = self.attn(encoder_output)
-            energy = hidden * energy
-            energy = torch.sum(energy, dim=1)
-            return energy
-
-        elif self.method == 'concat':
-            energy = self.attn(torch.cat((hidden, encoder_output), 1))
-            energy = self.other.dot(energy)
-            return energy
-
-
-class AttnDecoderRNN(nn.Module):
-    def __init__(self, attn_model='general', hidden_size=128, output_size=128, n_layers=5, dropout_p=0.1):
-        super(AttnDecoderRNN, self).__init__()
-
-        # Keep parameters for reference
-        self.attn_model = attn_model
-        self.hidden_size = hidden_size
-        self.output_size = output_size
-        self.n_layers = n_layers
-        self.dropout_p = dropout_p
-
-        # Define layers
-        self.embedding = nn.Embedding(output_size, hidden_size)
-        self.gru = nn.GRU(hidden_size * 2, hidden_size, n_layers, dropout=dropout_p, batch_first=True)
-        self.audio_form = nn.Linear(hidden_size * 2, output_size)
-
-        # Choose attention model
-        if attn_model != 'none':
-            self.attn = Attn(attn_model, hidden_size)
-
-    def forward(self, audio_input, last_context, last_hidden, encoder_outputs):
-        # Note: we run this one step at a time
-        bs = audio_input.size(0)
-
-        # Combine  input audio and last context, run through RNN
-        rnn_input = torch.cat((audio_input, last_context), dim=1)  # rnn_input = bs * (hidden*2)
-        rnn_input = rnn_input.view(bs, 1, -1)  # rnn_input = bs * 1 * (hidden*2)
-        rnn_output, hidden = self.gru(rnn_input, last_hidden)
-        # rnn_output = bs * 1 * hidden, hidden = (num_layers * num_directions) * bs * hidden_size
-
-        # Calculate attention from current RNN state and all encoder outputs; apply to encoder outputs
-        attn_weights = self.attn(rnn_output.view(bs, -1), encoder_outputs)
-        attn_weights = attn_weights.view(bs, 1, -1)
-        context = attn_weights.bmm(encoder_outputs)
-        # (bs * 1 * seq) X (bs * seq * encoder_hidden_size) = bs * 1 * en_hidden_size
-        context = context.view(bs, -1)  # context = bs * en_hidden_size
-
-        # Final output layer (next word prediction) using the RNN hidden state and context vector
-        rnn_output = rnn_output.view(bs, -1)
-
-        audio_output = self.audio_form(torch.cat((rnn_output, context), dim=1))
-        audio_output = F.tanh(audio_output)
-
-        # Return final output, hidden state, and attention weights (for visualization)
-        return audio_output, context, hidden, attn_weights
+        print(loss_posi.data[0], loss_nega.data[0])
+        return loss

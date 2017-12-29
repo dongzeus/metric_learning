@@ -215,7 +215,7 @@ def main():
     # create model
     model_ls = []
     for i in range(opt.model_number):
-        m = models.VA_LSTM()
+        m = models.VA_lstm()
         # m = models.VAMetric_conv()
         model_ls.append(m)
 
@@ -231,7 +231,7 @@ def main():
     # criterion = models.conv_loss_dqy()
     # criterion = models.N_pair_loss()
     # criterion = models.Topk_loss()
-    criterion = models.metric_loss()
+    criterion = models.lstm_loss()
 
     if opt.cuda:
         print('shift model and criterion to GPU .. ')
