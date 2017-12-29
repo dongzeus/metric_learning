@@ -7,87 +7,25 @@ import numpy as np
 USE_CUDA = False
 
 
-class VAMetric_conv(nn.Module):
-    def __init__(self, framenum=120):
-        super(VAMetric_conv, self).__init__()
-
-        # self.vLSTM = FeatLSTM(1024, 512, 128)
-        # self.aLSTM = FeatLSTM(128, 128, 128)
-
-        self.vfc1 = nn.Linear(in_features=1024, out_features=512)
-        self.vfc2 = nn.Linear(in_features=512, out_features=128)
-        self.afc1 = nn.Linear(in_features=128, out_features=128)
-        self.afc2 = nn.Linear(in_features=128, out_features=128)
-
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn*32*120
-        # self.mp = nn.MaxPool1d(kernel_size=4)
-        self.dp = nn.Dropout(0.5)
-        self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=8, stride=1)  # output bn*32*113
-        self.fc3 = nn.Linear(in_features=32 * 113, out_features=1024)
-        self.fc4 = nn.Linear(in_features=1024, out_features=2)
-        self.fc5 = nn.Linear(in_features=1024, out_features=2)
-        self.fc6 = nn.Linear(in_features=128, out_features=2)
-        self.init_params()
-
-    def init_params(self):
-        for m in self.modules():
-
-            if isinstance(m, nn.Linear):
-                nn.init.xavier_normal(m.weight)
-                nn.init.constant(m.bias, 0)
-
-    def forward(self, vfeat, afeat):
-
-        # vfeat = self.vLSTM(vfeat)
-        # afeat = self.aLSTM(afeat)
-
-        vfeat = self.vfc1(vfeat)
-        vfeat = F.relu(vfeat)
-        vfeat = self.vfc2(vfeat)
-        vfeat = F.relu(vfeat)
-
-        # afeat = self.afc1(afeat)
-        # afeat = F.relu(afeat)
-        # afeat = self.afc2(afeat)
-        # afeat = F.relu(afeat)
-
-        vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
-        afeat = afeat.view(afeat.size(0), 1, 1, -1)
-
-        vafeat = torch.cat((vfeat, afeat), dim=2)
-        vafeat = self.conv1(vafeat)
-        vafeat = self.dp(vafeat)
-        vafeat = vafeat.view(vafeat.size(0), vafeat.size(1), -1)
-        vafeat = self.conv2(vafeat)
-        vafeat = vafeat.view([vafeat.size(0), -1])
-        vafeat = self.fc3(vafeat)
-        vafeat = F.relu(vafeat)
-        vafeat = self.fc4(vafeat)
-
-        result = F.softmax(vafeat)
-
-        return result
-
-
 class Encoder(nn.Module):
-    def __init__(self, num_layer=5, hidden_size=128):
+    def __init__(self, batch_size, num_layer=5, hidden_size=128):
         super(Encoder, self).__init__()
 
         self.num_layer = num_layer
         self.hidden_size = hidden_size
-
+        self.bs = batch_size
         self.encoder = nn.GRU(input_size=1024, hidden_size=hidden_size, num_layers=self.num_layer, batch_first=True,
                               bidirectional=False)
 
     def init_hidden(self):
-        bz = 64
-        hidden_0 = Variable(torch.nn.init.orthogonal(torch.zeros(self.num_layer * 2, bz, 1024)))
+        bz = self.bs
+        hidden_0 = Variable(torch.nn.init.orthogonal(torch.zeros(self.num_layer, bz, self.hidden_size)))
         if USE_CUDA:
             hidden_0 = hidden_0.cuda()
         return hidden_0
 
-    def forward(self, vfeat):
-        output, hidden = self.encoder(vfeat, self.init_hidden())
+    def forward(self, vfeat, hidden):
+        output, hidden = self.encoder(vfeat, hidden)
 
         return output, hidden
 
@@ -141,9 +79,9 @@ class Attn(nn.Module):
             return energy
 
 
-class AttnDecoderRNN(nn.Module):
+class AttnDecoder(nn.Module):
     def __init__(self, attn_model='general', hidden_size=128, output_size=128, n_layers=5, dropout_p=0.1):
-        super(AttnDecoderRNN, self).__init__()
+        super(AttnDecoder, self).__init__()
 
         # Keep parameters for reference
         self.attn_model = attn_model
@@ -186,3 +124,14 @@ class AttnDecoderRNN(nn.Module):
 
         # Return final output, hidden state, and attention weights (for visualization)
         return audio_output, context, hidden, attn_weights
+
+
+class cossim_loss(nn.Module):
+    def __init__(self):
+        super(cossim_loss, self).__init__()
+
+    def forward(self, audio_output, target):
+        sim = F.cosine_similarity(audio_output, target, dim=1)
+        loss = torch.mean(1 - sim)
+
+        return loss
