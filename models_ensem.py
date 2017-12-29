@@ -84,15 +84,15 @@ class VA_LSTM(nn.Module):
     def forward(self, vfeat, afeat):
         bz = vfeat.size(0)
 
-        h_0_v = Variable(torch.Tensor(self.num_layer * 2, bz, 128))
-        c_0_v = Variable(torch.Tensor(self.num_layer * 2, bz, 128))
+        h_0_v = Variable(torch.Tensor(self.num_layer * 2, bz, 128)).cuda()
+        c_0_v = Variable(torch.Tensor(self.num_layer * 2, bz, 128)).cuda()
         nn.init.orthogonal(h_0_v)
         nn.init.orthogonal(c_0_v)
         vfeat = self.v_lstm(vfeat, (h_0_v, c_0_v))[0]
         vfeat = vfeat[:, 119, :]
 
-        h_0_a = Variable(torch.Tensor(self.num_layer * 2, bz, 128))
-        c_0_a = Variable(torch.Tensor(self.num_layer * 2, bz, 128))
+        h_0_a = Variable(torch.Tensor(self.num_layer * 2, bz, 128)).cuda()
+        c_0_a = Variable(torch.Tensor(self.num_layer * 2, bz, 128)).cuda()
         nn.init.orthogonal(h_0_a)
         nn.init.orthogonal(c_0_a)
         afeat = self.a_lstm(afeat, (h_0_a, c_0_a))[0]
