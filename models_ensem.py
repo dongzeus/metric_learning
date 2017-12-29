@@ -79,27 +79,45 @@ class VA_lstm(nn.Module):
         self.num_direction = 1
         if self.bidirection:
             self.num_direction = 2
-        self.vafc = nn.Linear(in_features=1024 + 128, out_features=1024)
-        self.lstm = nn.LSTM(input_size=1024, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
-                            batch_first=True, bidirectional=self.bidirection)
-        self.fc1 = nn.Linear(in_features=self.hidden_size * self.num_direction, out_features=128)
-        self.fc2 = nn.Linear(in_features=128, out_features=1)
+        self.valstm_hidden_size = self.hidden_size * 2 * self.num_direction
+
+        self.vlstm = nn.LSTM(input_size=1024, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
+                             batch_first=True, bidirectional=self.bidirection)
+
+        self.alstm = nn.LSTM(input_size=128, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
+                             batch_first=True, bidirectional=self.bidirection)
+
+        self.valstm = nn.LSTM(input_size=self.valstm_hidden_size, hidden_size=self.valstm_hidden_size,
+                              num_layers=self.num_layers, dropout=0.1, batch_first=True, bidirectional=self.bidirection)
+
+        self.mp = nn.MaxPool1d(kernel_size=120)
+
+        self.fc1 = nn.Linear(in_features=self.valstm_hidden_size * self.num_direction, out_features=1024)
+        self.fc2 = nn.Linear(in_features=1024, out_features=1)
 
     def forward(self, vfeat, afeat):
         bs = vfeat.size(0)
-        vafeat = torch.cat((vfeat, afeat), dim=2)
-        vafeat = F.relu(self.vafc(vafeat))
-        lstm_output = self.lstm(vafeat, self.param_init(batch_size=bs))[0]
-        lstm_output = lstm_output[:, 119, :]
-        lstm_output = F.relu(self.fc1(lstm_output))
-        sim = F.tanh(self.fc2(lstm_output))
+
+        vlstm_out = self.vlstm(vfeat, self.param_init(batch_size=bs))[0]
+        alstm_out = self.alstm(afeat, self.param_init(batch_size=bs))[0]
+
+        va = torch.cat((vlstm_out, alstm_out), dim=2)
+
+        valstm_out = self.valstm(va, self.param_init(batch_size=bs, hidden_size=self.valstm_hidden_size))[0]
+        valstm_out = torch.transpose(valstm_out, 1, 2)
+        valstm_out = self.mp(valstm_out)
+        valstm_out = valstm_out.view(bs, -1)
+        valstm_output = F.relu(self.fc1(valstm_out))
+        sim = F.tanh(self.fc2(valstm_output))
 
         return sim
 
-    def param_init(self, batch_size):
+    def param_init(self, batch_size, hidden_size=None):
+        if hidden_size is None:
+            hidden_size = self.hidden_size
         bs = batch_size
-        h_0 = Variable(torch.zeros(self.num_layers * self.num_direction, bs, self.hidden_size))
-        c_0 = Variable(torch.zeros(self.num_layers * self.num_direction, bs, self.hidden_size))
+        h_0 = Variable(torch.zeros(self.num_layers * self.num_direction, bs, hidden_size))
+        c_0 = Variable(torch.zeros(self.num_layers * self.num_direction, bs, hidden_size))
         torch.nn.init.orthogonal(h_0)
         torch.nn.init.orthogonal(c_0)
         if USE_CUDA:
