@@ -144,7 +144,7 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
                 decoder_input = audio_output
 
         loss = loss / seq_length
-        loss_rec.append(loss)
+        loss_rec.append(loss.data[0])
 
         losses.update(loss.data[0], vfeat.size(0))
         loss.backward()
