@@ -124,11 +124,10 @@ class VA_lstm(nn.Module):
         return h_0, c_0
 
     def Linear_init(self):
-
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 nn.init.xavier_normal(m.weight)
-                nn.init.xavier_normal(m.bias)
+                nn.init.constant(m.bias, 0)
 
 
 class lstm_loss(nn.Module):
