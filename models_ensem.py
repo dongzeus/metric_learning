@@ -96,7 +96,7 @@ class VA_lstm(nn.Module):
         vlstm_out = vlstm_out[:, 119, :]
         alstm_out = alstm_out[:, 119, :]
 
-        sim = F.cosine_similarity(vlstm_out, alstm_out, dim=1)
+        sim = F.pairwise_distance(vlstm_out, alstm_out)
 
         return sim
 
