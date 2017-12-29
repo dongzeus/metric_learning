@@ -15,7 +15,7 @@ from torch.autograd import Variable
 from torch.optim.lr_scheduler import LambdaLR as LR_Policy
 
 import models_lstm as models
-from dataset_ensem import VideoFeatDataset
+from dataset_lstm import VideoFeatDataset
 from tools.config_tools import Config
 from tools import utils
 
@@ -44,16 +44,19 @@ if not os.path.exists(opt.checkpoint_folder):
     os.system('mkdir {0}'.format(opt.checkpoint_folder))
 
 tds_ls = []
+#######################################################
+# change the first bagging to True when ensemble many models
+#######################################################
 for i in range(opt.model_number):
     if i == 0:
         tds_ls.append(VideoFeatDataset(root=opt.data_dir, flist=opt.flist, test_list=opt.test_flist,
-                                       test_number=opt.test_number, bagging=True, creat_test=True))
+                                       test_number=opt.test_number, bagging=False, creat_test=True))
     else:
         tds_ls.append(VideoFeatDataset(root=opt.data_dir, flist=opt.flist, bagging=True, creat_test=False,
                                        test_list_pass=tds_ls[0].get_ori_pathlist()))
 
 # =================== creat test set before import evaluate ===================
-import evaluate_ensem as evaluate
+import evaluate_lstm as evaluate
 
 # =================== creat test set before import evaluate ===================
 
@@ -220,7 +223,7 @@ def main():
     positive_rec = []
     negative_rec = []
 
-    ######### to test each epoch
+    ######### to test each epoch ###############################################################
     parser = OptionParser()
     parser.add_option('--config',
                       type=str,
@@ -238,7 +241,7 @@ def main():
     test_audio_loader = torch.utils.data.DataLoader(test_audio_dataset, batch_size=opts_test.batchSize,
                                                     shuffle=False, num_workers=int(opts_test.workers))
 
-    ########
+    ############################################################################################
 
     # another test for git
     for epoch in range(resume_epoch, opt.max_epochs):
@@ -257,15 +260,24 @@ def main():
         ##################################
         # save checkpoints
         ##################################
-        # if ((epoch + 1) % opt.epoch_save) == 0:
-        #     for i in range(opt.model_number):
-        #         path_checkpoint = '{0}/{1}_state_epoch{2}_model{3}.pth'.format(opt.checkpoint_folder, opt.prefix,
-        #                                                                        epoch + 1, i + 1)
-        #         utils.save_checkpoint(model_ls[i].state_dict(), path_checkpoint)
+        if ((epoch + 1) % opt.epoch_save) == 0:
+            for i in range(opt.model_number):
+                m = model_ls[i]
+                encoder_path_checkpoint = '{0}/{1}_state_epoch{2}_encoder_model_{3}.pth'.format(opt.checkpoint_folder, opt.prefix,
+                                                                               epoch + 1, i + 1)
+                utils.save_checkpoint(m[0].state_dict(), encoder_path_checkpoint)
+
+                decoder_path_checkpoint = '{0}/{1}_state_epoch{2}_decoder_model_{3}.pth'.format(opt.checkpoint_folder, opt.prefix,
+                                                                               epoch + 1, i + 1)
+                utils.save_checkpoint(m[1].state_dict(), decoder_path_checkpoint)
+
+                print('Save encoder model to {0}'.format(encoder_path_checkpoint))
+                print('Save decoder model to {0}'.format(decoder_path_checkpoint))
+
 
         if ((epoch + 1) % opt.epoch_plot) == 0:
             plt.figure(1)
-            #plt.subplot(1, 2, 1)
+            # plt.subplot(1, 2, 1)
             plt.plot(loss_rec)
             plt.legend('loss')
             # plt.subplot(1, 2, 2)
@@ -273,7 +285,7 @@ def main():
             # plt.plot(negative_rec)
             # plt.legend(('simmilarity of positives', 'simmilarity of negatives'))
             plt.show()
-            plt.savefig('./figures/result{0}.jpg'.format(epoch + 1))
+            plt.savefig('./figures/lstm_result{0}.jpg'.format(epoch + 1))
             plt.close()
         if ((epoch + 1) % opt.epoch_test) == 0:
             evaluate.test(test_video_loader, test_audio_loader, model_ls, opts_test)

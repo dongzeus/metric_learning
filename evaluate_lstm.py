@@ -29,8 +29,8 @@ import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 import numpy as np
 
-import models_v3 as models
-from dataset import VideoFeatDataset as dset
+import models_lstm as models
+from dataset_lstm import VideoFeatDataset as dset
 from tools import utils
 
 # reminding the cuda option
@@ -81,7 +81,6 @@ def test(video_loader, audio_loader, model_ls, opt):
                     if opt.cuda:
                         vfeat_var = vfeat_var.cuda()
                         afeat_var = afeat_var.cuda()
-
                     encoder_hidden = encoder.init_hidden()
                     encoder_output, encoder_hidden = encoder(vfeat_var, encoder_hidden)
                     decoder_hidden = encoder_hidden
@@ -156,26 +155,29 @@ def main():
     test_audio_loader = torch.utils.data.DataLoader(test_audio_dataset, batch_size=opt.batchSize,
                                                     shuffle=False, num_workers=int(opt.workers))
     # create model
-    model = models.VAMetric_conv()
-    # if opt.model is 'VAMetric':
-    #     model = models.VAMetric()
-    # elif opt.model is 'VAMetric2':
-    #     model = models.VAMetric2()
-    # else:
-    #     model = models.VAMetric()
-    #     opt.model = 'VAMetric'
+    encoder = models.Encoder(batch_size=opt.batchSize)
+    decoder = models.AttnDecoder()
 
-    if opt.init_model != '':
-        print('loading pretrained model from {0}'.format(opt.init_model))
-        model.load_state_dict(torch.load(opt.init_model))
+    if opt.init_encoder != '':
+        print('loading pretrained encoder model from {0}'.format(opt.init_encoder))
+        encoder.load_state_dict(torch.load(opt.init_encoder))
     else:
-        raise IOError('Please add your pretrained model path to init_model in config file!')
+        raise IOError('Please add your pretrained model path to init_encoder in config file!')
+
+    if opt.init_decoder != '':
+        print('loading pretrained decoder model from {0}'.format(opt.init_decoder))
+        decoder.load_state_dict(torch.load(opt.init_decoder))
+    else:
+        raise IOError('Please add your pretrained model path to init_decoder in config file!')
 
     if opt.cuda:
         print('shift model to GPU .. ')
-        model = model.cuda()
+        encoder = encoder.cuda()
+        decoder = decoder.cuda()
+    m = [encoder, decoder]
+    m_ls = [m]
 
-    test(test_video_loader, test_audio_loader, model, opt)
+    test(test_video_loader, test_audio_loader, m_ls, opt)
 
 
 if __name__ == '__main__':
