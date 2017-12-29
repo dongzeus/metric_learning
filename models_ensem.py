@@ -96,9 +96,9 @@ class VA_lstm(nn.Module):
         vlstm_out = vlstm_out[:, 119, :]
         alstm_out = alstm_out[:, 119, :]
 
-        sim = F.pairwise_distance(vlstm_out, alstm_out)
+        dis = F.pairwise_distance(vlstm_out, alstm_out)
 
-        return sim
+        return dis
 
     def param_init(self, batch_size, hidden_size=None):
         if hidden_size is None:
@@ -119,9 +119,9 @@ class lstm_loss(nn.Module):
     def __init__(self):
         super(lstm_loss, self).__init__()
 
-    def forward(self, sim, target):
-        loss_posi = torch.mean(F.relu(0.9 - (1 - target) * sim))
-        loss_nega = torch.mean(F.relu(0.9 + target * sim))
+    def forward(self, dis, target,margin=1):
+        loss_posi = torch.mean(F.relu((1 - target) * dis))
+        loss_nega = torch.mean(F.relu(margin - target * dis))
         loss = (loss_nega + loss_posi) / 2
 
         print(loss_posi.data[0], loss_nega.data[0])
