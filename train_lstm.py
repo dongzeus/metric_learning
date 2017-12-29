@@ -140,7 +140,7 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
                 loss += criterion(audio_output, target[:, seq, :])
                 decoder_input = audio_output
 
-        loss = loss / bs
+        loss = loss / seq_length
         loss_rec.append(loss)
 
         losses.update(loss.data[0], vfeat.size(0))
@@ -174,7 +174,7 @@ def main():
     for i in range(opt.model_number):
         encoder = models.Encoder(batch_size=opt.batchSize)
         decoder = models.AttnDecoder()
-        model_ls.append((encoder, decoder))
+        model_ls.append([encoder, decoder])
 
     # if opt.init_model_epoch != '':
     #     for i in range(opt.model_number):
@@ -199,7 +199,7 @@ def main():
         decoder = m[1]
         encoder_optim = optim.Adam(encoder.parameters(), lr=opt.lr)
         decoder_optim = optim.Adam(decoder.parameters(), lr=opt.lr)
-        op = (encoder_optim, decoder_optim)
+        op = [encoder_optim, decoder_optim]
         opt_ls.append(op)
 
     # adjust learning rate every lr_decay_epoch
@@ -208,7 +208,7 @@ def main():
     for op in opt_ls:
         en = LR_Policy(op[0], lambda_lr)
         de = LR_Policy(op[1], lambda_lr)
-        scheduler_ls.append((en, de))
+        scheduler_ls.append([en, de])
 
     resume_epoch = 0
 

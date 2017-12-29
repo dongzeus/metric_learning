@@ -1,5 +1,5 @@
-cuda: True
-#cuda: False
+#cuda: True
+cuda: False
 ngpu: 1
 gpu_id: '0'
 data_dir: ../Train       # replace it as your data path
@@ -7,7 +7,7 @@ flist: './filelists/train_filelist.txt'
 test_flist: './filelists/test_Name_List.txt'
 test_number: 100
 workers: 4
-batchSize: 32
+batchSize: 8
 manualSeed: 
 adam: True
 lr: 0.0001
@@ -16,7 +16,7 @@ lr_decay_epoch: 5
 momentum: 0.9
 weight_decay: 0.001
 max_epochs: 100
-print_freq: 10
+print_freq: 5
 epoch_save: 10
 epoch_plot: 5
 epoch_test: 5
