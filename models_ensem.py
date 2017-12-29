@@ -106,7 +106,7 @@ class VA_lstm(nn.Module):
         alstm_out = alstm_out.view(bs, -1)
 
         va = torch.cat((vlstm_out, alstm_out), dim=1)
-        sim = F.tanh(self.fc3(va))
+        sim = F.relu(self.fc3(va))
 
         return sim
 
