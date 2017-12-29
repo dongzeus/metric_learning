@@ -86,9 +86,9 @@ class VA_lstm(nn.Module):
 
         self.alstm = nn.LSTM(input_size=128, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
                              batch_first=True, bidirectional=self.bidirection)
-        self.fc1 = nn.Linear(128, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(256, 1)
+        self.fc1 = nn.Linear(128, 64)
+        self.fc2 = nn.Linear(64, 64)
+        self.fc3 = nn.Linear(64*120*2,1)
         self.Linear_init()
 
     def forward(self, vfeat, afeat):
@@ -97,18 +97,18 @@ class VA_lstm(nn.Module):
         vlstm_out = self.vlstm(vfeat, self.param_init(batch_size=bs))[0]
         alstm_out = self.alstm(afeat, self.param_init(batch_size=bs))[0]
 
-        vlstm_out = vlstm_out[:, 119, :]
-        alstm_out = alstm_out[:, 119, :]
-
         vlstm_out = F.relu(self.fc1(vlstm_out))
         vlstm_out = F.relu(self.fc2(vlstm_out))
+        vlstm_out = vlstm_out.view(bs, -1)
 
         alstm_out = F.relu(self.fc1(alstm_out))
         alstm_out = F.relu(self.fc2(alstm_out))
-        va = torch.cat((vlstm_out, alstm_out), dim=1)
-        dis = F.relu(self.fc3(va))
+        alstm_out = alstm_out.view(bs, -1)
 
-        return dis
+        va = torch.cat((vlstm_out, alstm_out), dim=1)
+        sim = F.tanh(self.fc3(va))
+
+        return sim
 
     def param_init(self, batch_size, hidden_size=None):
         if hidden_size is None:
@@ -135,9 +135,9 @@ class lstm_loss(nn.Module):
     def __init__(self):
         super(lstm_loss, self).__init__()
 
-    def forward(self, dis, target, margin=1):
-        loss_posi = torch.mean(F.relu((1 - target) * dis))
-        loss_nega = torch.mean(F.relu(margin - target * dis))
+    def forward(self, sim, target, margin=1):
+        loss_posi = torch.mean(F.relu(margin - (1 - target) * sim))
+        loss_nega = torch.mean(F.relu(target * sim))
         loss = (loss_nega + loss_posi) / 2
 
         print(loss_posi.data[0], loss_nega.data[0])
