@@ -106,7 +106,7 @@ class VA_lstm(nn.Module):
         alstm_out = alstm_out.view(bs, -1)
 
         va = torch.cat((vlstm_out, alstm_out), dim=1)
-        sim = F.relu(self.fc3(va))
+        sim = F.tanh(self.fc3(va))
 
         return sim
 
@@ -136,8 +136,8 @@ class lstm_loss(nn.Module):
         super(lstm_loss, self).__init__()
 
     def forward(self, sim, target, margin=1):
-        loss_posi = torch.mean(F.relu(margin - (1 - target) * sim))
-        loss_nega = torch.mean(F.relu(target * sim))
+        loss_posi = torch.mean(F.relu(0.9 - (1 - target) * sim))
+        loss_nega = torch.mean(F.relu(0.9 + target * sim))
         loss = (loss_nega + loss_posi) / 2
 
         print(loss_posi.data[0], loss_nega.data[0])
