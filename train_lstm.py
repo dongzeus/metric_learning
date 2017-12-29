@@ -186,7 +186,7 @@ def main():
     #         print('loading pretrained model from {0}'.format(path))
     #         model_ls[i].load_state_dict(torch.load(path))
 
-    criterion = models.cossim_loss()
+    criterion = models.pairwise_loss()
 
     if opt.cuda:
         print('shift model and criterion to GPU .. ')

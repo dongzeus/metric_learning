@@ -103,7 +103,9 @@ def test(video_loader, audio_loader, model_ls, opt):
             audio_gen_k = audio_gen[k, :, :].clone()
             audio_gen_k = audio_gen_k.repeat(num_test, 1, 1)
 
-            sim_k = torch.nn.functional.cosine_similarity(audio_gen_k, audio_target, dim=2)
+            sim_k = torch.nn.functional.pairwise_distance(audio_gen_k.view(num_test * audio_gen_k.size(1), -1),
+                                                          audio_target.view(num_test * audio_target.size(1), -1))
+            sim_k = sim_k.view(num_test, -1)
             sim_k = torch.mean(sim_k, dim=1)
 
             if k == 0:
@@ -131,7 +133,7 @@ def test(video_loader, audio_loader, model_ls, opt):
         else:
             simmat_ensem = simmat_ensem + sim
 
-    sorted, indices = torch.sort(simmat_ensem, 0, descending=True)
+    sorted, indices = torch.sort(simmat_ensem, dim=1, descending=True)
     np_indices = indices.cpu().data.numpy()
     topk = np_indices[:, 0:opt.topk]
     right = 0

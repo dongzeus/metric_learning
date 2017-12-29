@@ -125,12 +125,11 @@ class AttnDecoder(nn.Module):
         return audio_output, context, hidden, attn_weights
 
 
-class cossim_loss(nn.Module):
+class pairwise_loss(nn.Module):
     def __init__(self):
-        super(cossim_loss, self).__init__()
+        super(pairwise_loss, self).__init__()
 
     def forward(self, audio_output, target):
-        sim = F.cosine_similarity(audio_output, target, dim=1)
-        loss = torch.mean(1 - sim)
-
+        dis = nn.PairwiseDistance(audio_output, target)
+        loss = torch.mean(dis)
         return loss
