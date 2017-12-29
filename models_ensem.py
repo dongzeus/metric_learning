@@ -88,6 +88,7 @@ class VA_lstm(nn.Module):
                              batch_first=True, bidirectional=self.bidirection)
         self.fc1 = nn.Linear(128, 128)
         self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(256, 1)
         self.Linear_init()
 
     def forward(self, vfeat, afeat):
@@ -104,8 +105,8 @@ class VA_lstm(nn.Module):
 
         alstm_out = F.relu(self.fc1(alstm_out))
         alstm_out = F.relu(self.fc2(alstm_out))
-
-        dis = F.pairwise_distance(vlstm_out, alstm_out)
+        va = torch.cat((vlstm_out, alstm_out), dim=1)
+        dis = F.relu(self.fc3(va))
 
         return dis
 
