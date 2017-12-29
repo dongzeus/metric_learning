@@ -88,7 +88,7 @@ class VA_lstm(nn.Module):
                              batch_first=True, bidirectional=self.bidirection)
         self.fc1 = nn.Linear(128, 128)
         self.fc2 = nn.Linear(128, 128)
-
+        self.Linear_init()
 
     def forward(self, vfeat, afeat):
         bs = vfeat.size(0)
@@ -122,6 +122,12 @@ class VA_lstm(nn.Module):
             c_0 = c_0.cuda()
 
         return h_0, c_0
+
+    def Linear_init(self):
+
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_normal(m.parameters())
 
 
 class lstm_loss(nn.Module):
