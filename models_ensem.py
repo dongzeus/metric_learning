@@ -70,7 +70,7 @@ class VAMetric_conv(nn.Module):
 
 
 class VA_lstm(nn.Module):
-    def __init__(self, hidden_size=128, num_layers=2):
+    def __init__(self, hidden_size=128, num_layers=5):
         super(VA_lstm, self).__init__()
 
         self.hidden_size = hidden_size
@@ -87,29 +87,16 @@ class VA_lstm(nn.Module):
         self.alstm = nn.LSTM(input_size=128, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
                              batch_first=True, bidirectional=self.bidirection)
 
-        self.valstm = nn.LSTM(input_size=self.valstm_hidden_size, hidden_size=self.valstm_hidden_size,
-                              num_layers=self.num_layers, dropout=0.1, batch_first=True, bidirectional=self.bidirection)
-
-        self.mp = nn.MaxPool1d(kernel_size=120)
-
-        self.fc1 = nn.Linear(in_features=self.valstm_hidden_size * self.num_direction, out_features=1024)
-        self.fc2 = nn.Linear(in_features=1024, out_features=1)
-
     def forward(self, vfeat, afeat):
         bs = vfeat.size(0)
 
         vlstm_out = self.vlstm(vfeat, self.param_init(batch_size=bs))[0]
         alstm_out = self.alstm(afeat, self.param_init(batch_size=bs))[0]
 
-        va = torch.cat((vlstm_out, alstm_out), dim=2)
+        vlstm_out = vlstm_out[:, 119, :]
+        alstm_out = alstm_out[:, 119, :]
 
-        valstm_out = self.valstm(va, self.param_init(batch_size=bs, hidden_size=self.valstm_hidden_size))[0]
-        valstm_out = valstm_out[:, 119, :]
-        # valstm_out = torch.transpose(valstm_out, 1, 2)
-        # valstm_out = self.mp(valstm_out)
-        # valstm_out = valstm_out.view(bs, -1)
-        valstm_output = F.relu(self.fc1(valstm_out))
-        sim = F.tanh(self.fc2(valstm_output))
+        sim = F.cosine_similarity(vlstm_out, alstm_out, dim=1)
 
         return sim
 
