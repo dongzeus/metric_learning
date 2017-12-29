@@ -75,7 +75,7 @@ class VA_lstm(nn.Module):
 
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.bidirection = True
+        self.bidirection = False
         self.num_direction = 1
         if self.bidirection:
             self.num_direction = 2
@@ -86,6 +86,9 @@ class VA_lstm(nn.Module):
 
         self.alstm = nn.LSTM(input_size=128, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
                              batch_first=True, bidirectional=self.bidirection)
+        self.fc1 = nn.Linear(128, 128)
+        self.fc2 = nn.Linear(128, 128)
+
 
     def forward(self, vfeat, afeat):
         bs = vfeat.size(0)
@@ -95,6 +98,12 @@ class VA_lstm(nn.Module):
 
         vlstm_out = vlstm_out[:, 119, :]
         alstm_out = alstm_out[:, 119, :]
+
+        vlstm_out = F.relu(self.fc1(vlstm_out))
+        vlstm_out = F.relu(self.fc2(vlstm_out))
+
+        alstm_out = F.relu(self.fc1(alstm_out))
+        alstm_out = F.relu(self.fc2(alstm_out))
 
         dis = F.pairwise_distance(vlstm_out, alstm_out)
 
@@ -119,7 +128,7 @@ class lstm_loss(nn.Module):
     def __init__(self):
         super(lstm_loss, self).__init__()
 
-    def forward(self, dis, target,margin=1):
+    def forward(self, dis, target, margin=1):
         loss_posi = torch.mean(F.relu((1 - target) * dis))
         loss_nega = torch.mean(F.relu(margin - target * dis))
         loss = (loss_nega + loss_posi) / 2
