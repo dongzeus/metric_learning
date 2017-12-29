@@ -127,7 +127,8 @@ class VA_lstm(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                nn.init.xavier_normal(m.parameters())
+                nn.init.xavier_normal(m.weight)
+                nn.init.xavier_normal(m.bias)
 
 
 class lstm_loss(nn.Module):
