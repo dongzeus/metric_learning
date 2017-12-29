@@ -14,7 +14,7 @@ class Encoder(nn.Module):
         self.num_layer = num_layer
         self.hidden_size = hidden_size
         self.encoder = nn.GRU(input_size=1024, hidden_size=hidden_size, num_layers=self.num_layer, batch_first=True,
-                              bidirectional=False)
+                              bidirectional=False, dropout=0.1)
 
     def init_hidden(self, batch_size):
         bz = batch_size

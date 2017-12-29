@@ -59,18 +59,10 @@ def test(video_loader, audio_loader, model_ls, opt):
         decoder.eval()
 
         right = 0  # correct sample number
-        sample_num = 0  # total sample number
-        sim_mat = []  # similarity matrix
 
-        # ------------------------------------ important parameters -----------------------------------------------#
-        # bz_sim: the batch similarity between two visual and auditory feature batches
-        # slice_sim: the slice similarity between the visual feature batch and the whole auditory feature sets
-        # sim_mat: the total simmilarity matrix between the visual and auditory feature datasets
-        # -----------------------------------------------------------------------------------------------------#
-
+        # audio_gen is the audio feature generate by encoder-decoder model from video feature
         for i, vfeat in enumerate(video_loader):
             bs = vfeat.size()[0]
-            sample_num += bs
             vfeat_var = Variable(vfeat, volatile=True)
             if opt.cuda:
                 vfeat_var = vfeat_var.cuda()
@@ -87,62 +79,70 @@ def test(video_loader, audio_loader, model_ls, opt):
                                                                                       decoder_hidden, encoder_output)
                 decoder_input = audio_output
                 if seq == 0:
-                    audio_gen = audio_output.view(bs, 1, -1).clone()
+                    audio_gen_i = audio_output.view(bs, 1, -1).clone()
                 else:
-                    audio_gen = torch.cat((audio_gen, audio_output.view(bs, 1, -1)), dim=1)
-
-            # Compare the audio_gen with audio ground_truth
-            for j, afeat in enumerate(audio_loader):
-                afeat_var = Variable(afeat, volatile=True)
-                if opt.cuda:
-                    afeat_var = afeat_var.cuda()
-
-                sim = torch.nn.functional.cosine_similarity(audio_gen, afeat_var, dim=2)
-                cur_sim = torch.mean(sim, dim=1)
-                cur_sim = cur_sim.resize(bs, 1)
-                if k == 0:
-                    bz_sim = cur_sim.clone()
-                else:
-                    bz_sim = torch.cat((bz_sim, cur_sim.clone()), 1)
-            if j == 0:
-                slice_sim = bz_sim.clone()
-            else:
-                slice_sim = torch.cat((slice_sim, bz_sim.clone()), 0)
+                    audio_gen_i = torch.cat((audio_gen_i, audio_output.view(bs, 1, -1)), dim=1)
             if i == 0:
-                sim_mat = slice_sim.clone()
+                audio_gen = audio_gen_i.clone()
             else:
-                sim_mat = torch.cat((sim_mat, slice_sim.clone()), 1)
+                audio_gen = torch.cat((audio_gen, audio_gen_i), dim=1)
+
+        # audio_target is the ground truth of audio
+        for j, afeat in enumerate(audio_loader):
+            afeat_var = Variable(afeat, volatile=True)
+            if opt.cuda:
+                afeat_var = afeat_var.cuda()
+            if j == 0:
+                audio_target = afeat_var.clone()
+            else:
+                audio_target = torch.cat((audio_target, afeat_var), dim=0)
+
+        # sim is the similarity matrix between vfeat and afeat
+        num_test = audio_gen.size(0)
+        for k in range(num_test):
+            audio_gen_k = audio_gen[k, :, :].clone()
+            audio_gen_k = audio_gen_k.repeat(num_test, 1, 1)
+
+            sim_k = torch.nn.functional.cosine_similarity(audio_gen_k, audio_target, dim=2)
+            sim_k = torch.mean(sim_k, dim=1)
+
+            if k == 0:
+                sim_k = sim_k.view(1, -1)
+                sim = sim_k.clone()
+            else:
+                sim_k = sim_k.view(1, -1)
+                sim = torch.cat((sim, sim_k), dim=0)
 
         # if your metric is the feature distance, you should set descending=False, else if your metric is feature similarity, you should set descending=True
-        sorted, indices = torch.sort(sim_mat, 0, descending=True)
+        sorted, indices = torch.sort(sim, dim=1, descending=True)
         np_indices = indices.cpu().data.numpy()
-        topk = np_indices[:opt.topk, :]
-        for k in np.arange(sample_num):
-            order = topk[:, k]
+        topk = np_indices[:, 0:opt.topk]
+        for k in np.arange(num_test):
+            order = topk[k, :]
             if k in order:
                 right = right + 1
         print('==================================================================================')
-        print('The No.{} similarity matrix: \n {}'.format(num + 1, sim_mat))
-        print('No.{} testing accuracy (top{}): {:.3f}'.format(num + 1, opt.topk, right / sample_num))
+        print('The No.{} similarity matrix: \n {}'.format(num + 1, sim))
+        print('No.{} testing accuracy (top{}): {:.3f}'.format(num + 1, opt.topk, right / num_test))
         print('==================================================================================')
 
         if num == 0:
-            simmat_ensem = sim_mat
+            simmat_ensem = sim
         else:
-            simmat_ensem = simmat_ensem + sim_mat
+            simmat_ensem = simmat_ensem + sim
 
     sorted, indices = torch.sort(simmat_ensem, 0, descending=True)
     np_indices = indices.cpu().data.numpy()
-    topk = np_indices[:opt.topk, :]
+    topk = np_indices[:, 0:opt.topk]
     right = 0
-    sample_num = simmat_ensem.size(0)
-    for k in np.arange(sample_num):
-        order = topk[:, k]
+    num_test = simmat_ensem.size(0)
+    for k in np.arange(num_test):
+        order = topk[k, :]
         if k in order:
             right = right + 1
     print('==================================================================================')
     print('The ensembel similarity matrix: \n {}'.format(simmat_ensem))
-    print('Ensembel testing accuracy (top{}): {:.3f}'.format(opt.topk, right / sample_num))
+    print('Ensembel testing accuracy (top{}): {:.3f}'.format(opt.topk, right / num_test))
     print('==================================================================================')
 
 
