@@ -104,9 +104,10 @@ class VA_lstm(nn.Module):
         va = torch.cat((vlstm_out, alstm_out), dim=2)
 
         valstm_out = self.valstm(va, self.param_init(batch_size=bs, hidden_size=self.valstm_hidden_size))[0]
-        valstm_out = torch.transpose(valstm_out, 1, 2)
-        valstm_out = self.mp(valstm_out)
-        valstm_out = valstm_out.view(bs, -1)
+        valstm_out = valstm_out[:, 119, :]
+        # valstm_out = torch.transpose(valstm_out, 1, 2)
+        # valstm_out = self.mp(valstm_out)
+        # valstm_out = valstm_out.view(bs, -1)
         valstm_output = F.relu(self.fc1(valstm_out))
         sim = F.tanh(self.fc2(valstm_output))
 
