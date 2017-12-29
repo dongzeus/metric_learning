@@ -130,6 +130,6 @@ class pairwise_loss(nn.Module):
         super(pairwise_loss, self).__init__()
 
     def forward(self, audio_output, target):
-        dis = nn.PairwiseDistance(audio_output, target)
+        dis = nn.functional.pairwise_distance(audio_output, target)
         loss = torch.mean(dis)
         return loss
