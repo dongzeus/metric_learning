@@ -5,39 +5,6 @@ import torch.nn.functional as F
 import numpy as np
 
 
-class FeatLSTM(nn.Module):
-    def __init__(self, input_size=1024, hidden_size=128, out_size=128):
-        super(FeatLSTM, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.out_size = out_size
-        self.lstm1 = nn.LSTMCell(input_size, hidden_size)
-        self.lstm2 = nn.LSTMCell(hidden_size, out_size)
-
-    def forward(self, feats):
-        h_t = Variable(torch.zeros(feats.size(0), self.hidden_size).float(), requires_grad=True)
-        c_t = Variable(torch.zeros(feats.size(0), self.hidden_size).float(), requires_grad=True)
-        h_t2 = Variable(torch.zeros(feats.size(0), self.out_size).float(), requires_grad=True)
-        c_t2 = Variable(torch.zeros(feats.size(0), self.out_size).float(), requires_grad=True)
-
-        if feats.is_cuda:
-            h_t = h_t.cuda()
-            c_t = c_t.cuda()
-            h_t2 = h_t2.cuda()
-            c_t2 = c_t2.cuda()
-
-        for _, feat_t in enumerate(feats.chunk(feats.size(1), dim=1)):
-            h_t, c_t = self.lstm1(feat_t[:, 0, :], (h_t, c_t))
-            h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
-            if _ == 0:
-                stream = h_t2.view(h_t2.size(0), 1, -1)
-            else:
-                stream = torch.cat((stream, h_t2.view(h_t2.size(0), 1, -1)), dim=1)
-        # aggregated feature
-
-        return stream
-
-
 class VAMetric_conv(nn.Module):
     def __init__(self, framenum=120):
         super(VAMetric_conv, self).__init__()
@@ -101,54 +68,46 @@ class VAMetric_conv(nn.Module):
 
 
 class VA_LSTM(nn.Module):
-    def __init__(self):
+    def __init__(self, num_layer=5):
         super(VA_LSTM, self).__init__()
-        self.v_lstm = nn.LSTM(input_size=1024, hidden_size=128, num_layers=5, batch_first=True, bidirectional=True)
-        self.a_lstm = nn.LSTM(input_size=128, hidden_size=128, num_layers=5, batch_first=True, bidirectional=True)
 
-        self.va_lstm = nn.LSTM(input_size=1152, hidden_size=128, num_layers=2, batch_first=True, bidirectional=True,
-                               dropout=0.2)
-
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn*32*120
-
-        self.fcva1 = nn.Linear(in_features=128 * 2, out_features=128)
-        self.fcva2 = nn.Linear(128, 1)
-        self.fcva3 = nn.Linear(120, 1)
+        self.num_layer = num_layer
+        self.v_lstm = nn.LSTM(input_size=1024, hidden_size=128, num_layers=num_layer, batch_first=True,
+                              bidirectional=True)
+        self.a_lstm = nn.LSTM(input_size=128, hidden_size=128, num_layers=num_layer, batch_first=True,
+                              bidirectional=True)
 
         self.fc1 = nn.Linear(128 * 2, 128 * 2)
-        self.fc2 = nn.Linear(128 * 2, 128)
-        self.fc3 = nn.Linear(120 * 128 * 2, 1)
+        self.fc2 = nn.Linear(128 * 2, 128 * 2)
+        self.fc3 = nn.Linear(128 * 2, 1)
 
     def forward(self, vfeat, afeat):
-        # vafeat = torch.cat((vfeat, afeat), dim=2)
-        # vafeat = self.va_lstm(vafeat)[0]
-        # vafeat = F.relu(self.fcva1(vafeat))
-        # vafeat = F.relu(self.fcva2(vafeat))
-        # vafeat = vafeat.view(vafeat.size(0), 120)
-        # vafeat = F.tanh(self.fcva3(vafeat))
-        # # vafeat = F.relu(self.fcva3(vafeat))
+        bz = vfeat.size(0)
 
+        h_0_v = Variable(torch.Tensor(self.num_layer * 2, bz, 128))
+        c_0_v = Variable(torch.Tensor(self.num_layer * 2, bz, 128))
+        nn.init.orthogonal(h_0_v)
+        nn.init.orthogonal(c_0_v)
+        vfeat = self.v_lstm(vfeat, (h_0_v, c_0_v))[0]
+        vfeat = vfeat[:, 119, :]
 
-        vfeat = self.v_lstm(vfeat)[0]
-        afeat = self.a_lstm(afeat)[0]
-
-        # vfeat = vfeat.view(vfeat.size(0), 1, 1, -1)
-        # afeat = afeat.view(afeat.size(0), 1, 1, -1)
+        h_0_a = Variable(torch.Tensor(self.num_layer * 2, bz, 128))
+        c_0_a = Variable(torch.Tensor(self.num_layer * 2, bz, 128))
+        nn.init.orthogonal(h_0_a)
+        nn.init.orthogonal(c_0_a)
+        afeat = self.a_lstm(afeat, (h_0_a, c_0_a))[0]
+        afeat = afeat[:, 119, :]
 
         vfeat = F.relu(self.fc1(vfeat))
         vfeat = F.relu(self.fc2(vfeat))
-        vfeat = vfeat.view(vfeat.size(0), -1)
+        vfeat = F.relu(self.fc3(vfeat))
 
         afeat = F.relu(self.fc1(afeat))
         afeat = F.relu(self.fc2(afeat))
-        afeat = afeat.view(afeat.size(0), -1)
+        afeat = F.relu(self.fc3(afeat))
 
-        vafeat = torch.cat((vfeat, afeat), dim=1)
-        dis = self.fc3(vafeat)
-
-        # vfeat = vfeat.view(vfeat.size(0), -1)
-        # afeat = afeat.view(afeat.size(0), -1)
-
+        vafeat = vfeat - afeat
+        dis = torch.norm(vafeat, p=2, dim=1)
 
         return dis
 
