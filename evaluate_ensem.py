@@ -82,7 +82,7 @@ def test(video_loader, audio_loader, model_ls, opt):
                         afeat_var = afeat_var.cuda()
 
                     cur_sim = model(vfeat_var, afeat_var)
-                    #cur_sim = cur_sim[:, 0].clone()
+                    cur_sim = cur_sim[:, 0].clone()
                     cur_sim = cur_sim.resize(bz, 1)
                     if k == 0:
                         bz_sim = cur_sim.clone()
