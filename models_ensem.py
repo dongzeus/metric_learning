@@ -110,8 +110,8 @@ class VA_lstm(nn.Module):
         vlstm = self.vlstm(vfeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
         alstm = self.alstm(afeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
 
-        vlstm = vlstm.resize(bs, 1, 1, 118 * self.hidden_size * 3)
-        alstm = alstm.resize(bs, 1, 1, 118 * self.hidden_size * 3)
+        vlstm = vlstm.resize(bs, 1, 1, 118 * self.hidden_size)
+        alstm = alstm.resize(bs, 1, 1, 118 * self.hidden_size)
 
         va = torch.cat((vlstm, alstm), dim=2)
         va = self.conv1(va)
