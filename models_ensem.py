@@ -70,7 +70,7 @@ class VAMetric_conv(nn.Module):
 
 
 class VA_lstm(nn.Module):
-    def __init__(self, hidden_size=128 * 3, num_layers=2):
+    def __init__(self, hidden_size=128 * 3, num_layers=3):
         super(VA_lstm, self).__init__()
 
         self.hidden_size = hidden_size
@@ -79,19 +79,18 @@ class VA_lstm(nn.Module):
         self.num_direction = 1
         if self.bidirection:
             self.num_direction = 2
-        self.valstm_hidden_size = self.hidden_size * 2 * self.num_direction
 
-        self.vlstm = nn.LSTM(input_size=1024 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
+        self.vlstm = nn.LSTM(input_size=1024 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.3,
                              batch_first=True, bidirectional=self.bidirection)
 
-        self.alstm = nn.LSTM(input_size=128 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
+        self.alstm = nn.LSTM(input_size=128 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.3,
                              batch_first=True, bidirectional=self.bidirection)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 3 * 2),
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=128, kernel_size=(2, 128 * 3 * 2),
                                stride=128 * 3 * 2)  # output bn * 16 * 118
 
         self.dp = nn.Dropout(p=0.3)
-        self.vafc1 = nn.Linear(16 * 118, 1024)
+        self.vafc1 = nn.Linear(128 * 118, 1024)
         self.vafc2 = nn.Linear(1024, 2)
         self.vafc3 = nn.Linear(1024, 2)
 
@@ -115,6 +114,7 @@ class VA_lstm(nn.Module):
         alstm = alstm.resize(bs, 1, 1, 118 * self.hidden_size * 2)
 
         va = torch.cat((vlstm, alstm), dim=2)
+        va = self.dp(va)
         va = self.conv1(va)
         va = self.dp(va)
         va = va.view(bs, -1)

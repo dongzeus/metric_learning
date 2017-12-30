@@ -29,7 +29,7 @@ import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 import numpy as np
 
-import models_v3 as models
+import models_ensem as models
 from dataset import VideoFeatDataset as dset
 from tools import utils
 

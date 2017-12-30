@@ -190,7 +190,8 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, num):
         ##############################
         # gradient clip stuff
         ##############################
-        # utils.clip_gradient(optimizer, opt.gradient_clip)
+        torch.nn.utils.clip_grad_norm(model.parameters(), opt.gradient_clip)
+
 
         # update parameters
         optimizer.step()
