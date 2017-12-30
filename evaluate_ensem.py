@@ -103,8 +103,7 @@ def test(video_loader, audio_loader, model_ls, opt):
             sample_num += bz
             for j, afeat in enumerate(audio_loader):
                 for k in np.arange(bz):
-                    vfeat = pca_tensor(vfeat, dim=1024, pr=True, feat='vfeat')
-                    afeat = pca_tensor(afeat, dim=128, pr=True, feat='afeat')
+
                     cur_vfeat = vfeat[k].clone()
                     cur_vfeats = cur_vfeat.repeat(bz, 1, 1)
 
