@@ -6,7 +6,6 @@ import numpy as np
 from optparse import OptionParser
 from tools.config_tools import Config
 
-USE_CUDA = True
 
 parser = OptionParser()
 parser.add_option('--config',
@@ -17,6 +16,7 @@ parser.add_option('--config',
 (opts, args) = parser.parse_args()
 assert isinstance(opts, object)
 opt = Config(opts.config)
+USE_CUDA = opt.cuda
 
 class VAMetric_conv(nn.Module):
     def __init__(self, framenum=120):
@@ -98,7 +98,7 @@ class VA_lstm(nn.Module):
                              batch_first=True, bidirectional=self.bidirection)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, opt.afeat_pca * 3 * 2),
-                               stride=128 * 3 * 2)  # output bn * 16 * 118
+                               stride=opt.afeat_pca * 3 * 2)  # output bn * 16 * 118
 
         self.dp = nn.Dropout(p=0.3)
         self.vafc1 = nn.Linear(16 * 118, 1024)
