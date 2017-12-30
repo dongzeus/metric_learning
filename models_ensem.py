@@ -114,7 +114,6 @@ class VA_lstm(nn.Module):
         alstm = alstm.resize(bs, 1, 1, 118 * self.hidden_size * 2)
 
         va = torch.cat((vlstm, alstm), dim=2)
-        va = self.dp(va)
         va = self.conv1(va)
         va = self.dp(va)
         va = va.view(bs, -1)
@@ -149,22 +148,22 @@ class lstm_loss(nn.Module):
     def __init__(self):
         super(lstm_loss, self).__init__()
 
-    # def forward(self, sim, target, margin=1):
-    #     bs = sim.size(0)
-    #     sim_0 = sim[:, 0]
-    #     sim_1 = sim[:, 1]
-    #     loss_posi = torch.mean(F.relu(torch.pow(sim_1[0:bs / 2], 1)))
-    #     loss_nega = torch.mean(F.relu(torch.pow(sim_0[bs / 2:bs], 1)))
-    #
-    #     loss_balance1 = F.relu(
-    #         0.9 - (torch.mean(torch.pow(sim_0[0:bs / 2], 1)) - torch.mean(torch.pow(sim_0[bs / 2:bs], 1))))
-    #     loss_balance2 = F.relu(
-    #         0.9 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 1)) - torch.mean(torch.pow(sim_1[0:bs / 2], 1))))
-    #
-    #     loss = 0.1 * loss_nega + 0.1 * loss_posi + 1 * loss_balance1 + 0 * loss_balance2
-    #
-    #     print(loss_posi.data[0], loss_nega.data[0], loss_balance1.data[0], loss_balance2.data[0])
-    #     return loss
+    def forward(self, sim, target, margin=0.7):
+        bs = sim.size(0)
+        sim_0 = sim[:, 0]
+        sim_1 = sim[:, 1]
+        loss_posi = torch.mean(F.relu(torch.pow(sim_1[0:bs / 2], 1)))
+        loss_nega = torch.mean(F.relu(torch.pow(sim_0[bs / 2:bs], 1)))
+
+        loss_balance1 = torch.mean(torch.clamp(margin - (sim_0[0:bs / 2] - sim_0[bs / 2:bs]), min=0))
+
+        loss_balance2 = F.relu(
+            0.9 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 1)) - torch.mean(torch.pow(sim_1[0:bs / 2], 1))))
+
+        loss = 0 * loss_nega + 0 * loss_posi + 1 * loss_balance1 + 0 * loss_balance2
+
+        print(loss_posi.data[0], loss_nega.data[0], loss_balance1.data[0], loss_balance2.data[0])
+        return loss
 
     def forward(self, sim, target, margin=0.5):
         bs = sim.size(0)
@@ -180,8 +179,6 @@ class lstm_loss(nn.Module):
 
         loss_balance1 = torch.mean(torch.pow(torch.clamp(margin - (posi_0 - nega_0), min=0), 1))
         loss_balance2 = torch.mean(torch.pow(torch.clamp(margin - (nega_1 - posi_1), min=0), 1))
-
-
 
         loss = 1 * loss_balance1 + 1 * loss_balance2
 
