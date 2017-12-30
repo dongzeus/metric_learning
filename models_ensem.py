@@ -178,8 +178,8 @@ class VA_lstm(nn.Module):
                                stride=128)  # output bn * 16 * 118
 
         self.dp = nn.Dropout(p=0.3)
-        self.vafc1 = nn.Linear(32*116, 512)
-        self.vafc2 = nn.Linear(512, 2)
+        self.vafc1 = nn.Linear(32*116, 1024)
+        self.vafc2 = nn.Linear(1024, 2)
         self.Linear_init()
 
     def forward(self, vfeat, afeat):
