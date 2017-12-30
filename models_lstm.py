@@ -20,12 +20,13 @@ USE_CUDA = opt.cuda
 
 
 class Encoder(nn.Module):
-    def __init__(self, num_layer=2, hidden_size=128):
+    def __init__(self, num_layer=4, hidden_size=opt.afeat_pca):
         super(Encoder, self).__init__()
 
         self.num_layer = num_layer
         self.hidden_size = hidden_size
-        self.encoder = nn.GRU(input_size=1024, hidden_size=hidden_size, num_layers=self.num_layer, batch_first=True,
+        self.encoder = nn.GRU(input_size=opt.vfeat_pca, hidden_size=hidden_size, num_layers=self.num_layer,
+                              batch_first=True,
                               bidirectional=False, dropout=0.1)
 
     def init_hidden(self, batch_size):
@@ -42,20 +43,20 @@ class Encoder(nn.Module):
 
 
 class Attn(nn.Module):
-    def __init__(self, method='general', hidden_size=128):
+    def __init__(self, method='general', hidden_size=opt.afeat_pca):
         super(Attn, self).__init__()
 
         self.method = method
         self.hidden_size = hidden_size
 
         if self.method == 'general':
-            self.attn = nn.Linear(self.hidden_size, hidden_size)
+            self.attn = nn.Linear(self.hidden_size, self.hidden_size)
 
         elif self.method == 'concat':
             self.attn = nn.Linear(self.hidden_size * 2, hidden_size)
             self.other = nn.Parameter(torch.FloatTensor(1, hidden_size))
 
-    def forward(self, hidden, encoder_outputs):
+    def forward(self, hidden, encoder_outputs, seq):
         bs = encoder_outputs.size(0)
         seq_len = encoder_outputs.size(1)
 
@@ -67,12 +68,15 @@ class Attn(nn.Module):
 
         # Calculate energies for each encoder output
         for i in range(seq_len):
-            attn_energies[:, i] = self.score(hidden, encoder_outputs[:, i, :])
+            augment = False
+            if abs(i - seq) < 2:
+                augment = True
+            attn_energies[:, i] = self.score(hidden, encoder_outputs[:, i, :],augment)
 
         # Normalize energies to weights in range 0 to 1, resize to 1 x 1 x seq_len
         return F.softmax(attn_energies)
 
-    def score(self, hidden, encoder_output):
+    def score(self, hidden, encoder_output, augment):
 
         if self.method == 'dot':
             energy = hidden.dot(encoder_output)
@@ -82,7 +86,7 @@ class Attn(nn.Module):
             energy = self.attn(encoder_output)
             energy = hidden * energy
             energy = torch.sum(energy, dim=1)
-            return energy
+            return energy * 5
 
         elif self.method == 'concat':
             energy = self.attn(torch.cat((hidden, encoder_output), 1))
@@ -91,7 +95,8 @@ class Attn(nn.Module):
 
 
 class AttnDecoder(nn.Module):
-    def __init__(self, attn_model='general', hidden_size=128, output_size=opt.afeat_pca, n_layers=2, dropout_p=0.1):
+    def __init__(self, attn_model='general', hidden_size=opt.afeat_pca, output_size=opt.afeat_pca, n_layers=4,
+                 dropout_p=0.1):
         super(AttnDecoder, self).__init__()
 
         # Keep parameters for reference
@@ -109,7 +114,7 @@ class AttnDecoder(nn.Module):
         if attn_model != 'none':
             self.attn = Attn(attn_model, hidden_size)
 
-    def forward(self, audio_input, last_context, last_hidden, encoder_outputs):
+    def forward(self, audio_input, last_context, last_hidden, encoder_outputs, seq):
         # Note: we run this one step at a time
         bs = audio_input.size(0)
 
@@ -120,7 +125,7 @@ class AttnDecoder(nn.Module):
         # rnn_output = bs * 1 * hidden, hidden = (num_layers * num_directions) * bs * hidden_size
 
         # Calculate attention from current RNN state and all encoder outputs; apply to encoder outputs
-        attn_weights = self.attn(rnn_output.view(bs, -1), encoder_outputs)
+        attn_weights = self.attn(rnn_output.view(bs, -1), encoder_outputs, seq=seq)
         attn_weights = attn_weights.view(bs, 1, -1)
         context = attn_weights.bmm(encoder_outputs)
         # (bs * 1 * seq) X (bs * seq * encoder_hidden_size) = bs * 1 * en_hidden_size

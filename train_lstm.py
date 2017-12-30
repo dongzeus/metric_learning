@@ -84,17 +84,24 @@ else:
 print('Random Seed: {0}'.format(opt.manualSeed))
 
 
-def pca_tensor(tensor, pr=False):
+def pca_tensor(tensor, dim, feat, pr=False):
+    if feat == 'vfeat':
+        n_component = opt.vfeat_pca
+    elif feat == 'afeat':
+        n_component = opt.afeat_pca
+    else:
+        exit()
+
     bs = tensor.size(0)
-    pca = PCA(n_components=opt.afeat_pca)
+    pca = PCA(n_components=n_component)
     if isinstance(tensor, Variable):
         tensor_np = tensor.data.numpy()
     else:
         tensor_np = tensor.numpy()
-    tensor_np.resize(bs * 120, 128)
+    tensor_np.resize(bs * 120, dim)
     pca.fit(tensor_np)
     tensor_np = pca.transform(tensor_np)
-    tensor_np.resize(bs, 120, opt.afeat_pca)
+    tensor_np.resize(bs, 120, n_component)
     tensor_new = torch.from_numpy(tensor_np)
     if isinstance(tensor, Variable):
         tensor_new = Variable(tensor_new)
@@ -135,8 +142,9 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
         # reverse vfeat
         for j in range(59):
             vfeat[:, j, :], vfeat[:, 119 - j, :] = vfeat[:, 119 - j, :], vfeat[:, j, :]
-        # do PCA for afeat
-        afeat = pca_tensor(afeat, pr=False)
+        # do PCA
+        vfeat = pca_tensor(vfeat, pr=False, dim=1024, feat='vfeat')
+        afeat = pca_tensor(afeat, pr=False, dim=128, feat='afeat')
 
         vfeat = Variable(vfeat)
         target = Variable(afeat)
@@ -158,9 +166,6 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
         # decoder
         decoder_hidden = encoder_hidden
         decoder_input = encoder_output[:, 119, :].clone()  # bs * 128
-        pca = PCA(n_components=opt.afeat_pca)
-        pca.fit(decoder_input.cpu().data.numpy())
-        decoder_input = Variable(torch.from_numpy(pca.transform(decoder_input.cpu().data.numpy())))
         if opt.cuda:
             decoder_input = decoder_input.cuda()
         decoder_context = torch.mean(encoder_output, dim=1)  # bs * 128
@@ -170,13 +175,15 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
         if teaching:
             for seq in range(seq_length):
                 audio_output, decoder_context, decoder_hidden, attn_weights = decoder(decoder_input, decoder_context,
-                                                                                      decoder_hidden, encoder_output)
+                                                                                      decoder_hidden, encoder_output,
+                                                                                      seq=seq)
                 loss += criterion(audio_output, target[:, seq, :])
                 decoder_input = target[:, seq, :]
         else:
             for seq in range(seq_length):
                 audio_output, decoder_context, decoder_hidden, attn_weights = decoder(decoder_input, decoder_context,
-                                                                                      decoder_hidden, encoder_output)
+                                                                                      decoder_hidden, encoder_output,
+                                                                                      seq=seq)
                 loss += criterion(audio_output, target[:, seq, :])
                 decoder_input = audio_output
 
