@@ -75,7 +75,7 @@ class VA_lstm(nn.Module):
 
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.bidirection = False
+        self.bidirection = True
         self.num_direction = 1
         if self.bidirection:
             self.num_direction = 2
@@ -87,8 +87,8 @@ class VA_lstm(nn.Module):
         self.alstm = nn.LSTM(input_size=128 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
                              batch_first=True, bidirectional=self.bidirection)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 3),
-                               stride=128 * 3)  # output bn * 16 * 118
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 3 * 2),
+                               stride=128 * 3 * 2)  # output bn * 16 * 118
 
         self.dp = nn.Dropout(p=0.3)
         self.vafc1 = nn.Linear(16 * 118, 1024)
@@ -111,8 +111,8 @@ class VA_lstm(nn.Module):
         vlstm = self.vlstm(vfeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
         alstm = self.alstm(afeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
 
-        vlstm = vlstm.resize(bs, 1, 1, 118 * self.hidden_size)
-        alstm = alstm.resize(bs, 1, 1, 118 * self.hidden_size)
+        vlstm = vlstm.resize(bs, 1, 1, 118 * self.hidden_size * 2)
+        alstm = alstm.resize(bs, 1, 1, 118 * self.hidden_size * 2)
 
         va = torch.cat((vlstm, alstm), dim=2)
         va = self.conv1(va)
