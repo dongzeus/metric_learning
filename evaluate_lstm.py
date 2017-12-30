@@ -86,6 +86,8 @@ def test(video_loader, audio_loader, model_ls, opt):
         # audio_gen is the audio feature generate by encoder-decoder model from video feature
         for i, vfeat in enumerate(video_loader):
             bs = vfeat.size()[0]
+            for j in range(59):
+                vfeat[:, j, :], vfeat[:, 119 - j, :] = vfeat[:, 119 - j, :], vfeat[:, j, :]
             vfeat_var = Variable(vfeat, volatile=True)
             if opt.cuda:
                 vfeat_var = vfeat_var.cuda()

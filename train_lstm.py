@@ -96,7 +96,7 @@ def pca_tensor(tensor, pr=False):
     tensor_np = pca.transform(tensor_np)
     tensor_np.resize(bs, 120, opt.afeat_pca)
     tensor_new = torch.from_numpy(tensor_np)
-    if isinstance(tensor,Variable):
+    if isinstance(tensor, Variable):
         tensor_new = Variable(tensor_new)
         if opt.cuda:
             tensor_new = tensor_new.cuda()
@@ -132,8 +132,11 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
         bs = vfeat.size()[0]
         seq_length = 120
 
+        # reverse vfeat
+        for j in range(59):
+            vfeat[:, j, :], vfeat[:, 119 - j, :] = vfeat[:, 119 - j, :], vfeat[:, j, :]
         # do PCA for afeat
-        afeat = pca_tensor(afeat, pr=True)
+        afeat = pca_tensor(afeat, pr=False)
 
         vfeat = Variable(vfeat)
         target = Variable(afeat)

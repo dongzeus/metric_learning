@@ -12,3 +12,4 @@ init_model: './checkpoints/VA_METRIC_state_epoch1.pth'
 topk: 5
 init_encoder: ''
 init_decoder: ''
+afeat_pca: 32
