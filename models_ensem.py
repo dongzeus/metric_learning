@@ -80,10 +80,10 @@ class VA_lstm(nn.Module):
         if self.bidirection:
             self.num_direction = 2
 
-        self.vlstm = nn.LSTM(input_size=1024 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.3,
+        self.vlstm = nn.LSTM(input_size=1024 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
                              batch_first=True, bidirectional=self.bidirection)
 
-        self.alstm = nn.LSTM(input_size=128 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.3,
+        self.alstm = nn.LSTM(input_size=128 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
                              batch_first=True, bidirectional=self.bidirection)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 3 * 2),
@@ -148,7 +148,7 @@ class lstm_loss(nn.Module):
     def __init__(self):
         super(lstm_loss, self).__init__()
 
-    def forward(self, sim, target, margin=0.7):
+    def forward(self, sim, target, margin=1):
         bs = sim.size(0)
         sim_0 = sim[:, 0]
         sim_1 = sim[:, 1]
@@ -160,7 +160,7 @@ class lstm_loss(nn.Module):
         loss_balance2 = F.relu(
             0.9 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 1)) - torch.mean(torch.pow(sim_1[0:bs / 2], 1))))
 
-        loss = 0 * loss_nega + 0 * loss_posi + 1 * loss_balance1 + 0 * loss_balance2
+        loss = 0.1 * loss_nega + 0.1 * loss_posi + 1 * loss_balance1 + 0 * loss_balance2
 
         print(loss_posi.data[0], loss_nega.data[0], loss_balance1.data[0])
         return loss
