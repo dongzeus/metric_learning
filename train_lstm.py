@@ -125,7 +125,7 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
     global sim_rec
     global loss_rec
 
-    teaching_ratio = 0.5
+    teaching_ratio = opt.teaching_ratio
 
     for i, (vfeat, afeat) in enumerate(train_loader):
 
