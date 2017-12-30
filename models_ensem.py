@@ -92,7 +92,8 @@ class VA_lstm(nn.Module):
 
         self.dp = nn.Dropout(p=0.5)
         self.vafc1 = nn.Linear(16 * 118, 1024)
-        self.vafc2 = nn.Linear(1024, 2)
+        self.vafc2 = nn.Linear(1024, 1024)
+        self.vafc3 = nn.Linear(1024, 2)
 
         self.Linear_init()
 
@@ -100,12 +101,12 @@ class VA_lstm(nn.Module):
         bs = vfeat.size(0)
         for seq in range(118):
             if seq == 0:
-                vfeat_3 = vfeat[:, seq:seq + 3, :].resize(bs, 1, 3*1024)
-                afeat_3 = afeat[:, seq:seq + 3, :].resize(bs, 1, 3*128)
+                vfeat_3 = vfeat[:, seq:seq + 3, :].resize(bs, 1, 3 * 1024)
+                afeat_3 = afeat[:, seq:seq + 3, :].resize(bs, 1, 3 * 128)
 
             else:
-                vfeat_3 = torch.cat((vfeat_3, vfeat[:, seq:seq + 3, :].resize(bs, 1, 3*1024)), dim=1)
-                afeat_3 = torch.cat((afeat_3, afeat[:, seq:seq + 3, :].resize(bs, 1, 3*128)), dim=1)
+                vfeat_3 = torch.cat((vfeat_3, vfeat[:, seq:seq + 3, :].resize(bs, 1, 3 * 1024)), dim=1)
+                afeat_3 = torch.cat((afeat_3, afeat[:, seq:seq + 3, :].resize(bs, 1, 3 * 128)), dim=1)
 
         vlstm = self.vlstm(vfeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
         alstm = self.alstm(afeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
@@ -119,7 +120,8 @@ class VA_lstm(nn.Module):
         va = va.view(bs, -1)
 
         va = F.relu(self.vafc1(va))
-        sim = F.softmax(self.vafc2(va))
+        va = F.relu(self.vafc2(va))
+        sim = F.softmax(self.vafc3(va))
 
         return sim
 
@@ -149,11 +151,15 @@ class lstm_loss(nn.Module):
         super(lstm_loss, self).__init__()
 
     def forward(self, sim, target, margin=1):
+        bs = sim.size(0)
         sim_0 = sim[:, 0]
         sim_1 = sim[:, 1]
-        loss_posi = torch.mean(F.relu((1 - target) * sim_1))
-        loss_nega = torch.mean(F.relu(target * sim_0))
-        loss = (loss_nega + loss_posi) / 2
+        loss_posi = torch.mean(F.relu(torch.pow(sim_1[0:bs / 2], 2)))
+        loss_nega = torch.mean(F.relu(torch.pow(sim_0[bs / 2:bs], 2)))
+        loss_balance = F.relu(
+            0.9 - (torch.mean(torch.pow(sim_0[0:bs / 2], 2)) - torch.mean(torch.pow(sim_0[bs / 2:bs], 2))))
+        r = 0.4
+        loss = r * loss_nega + (1 - r) * loss_posi + 0.5 * loss_balance
 
         print(loss_posi.data[0], loss_nega.data[0])
         return loss
