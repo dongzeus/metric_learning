@@ -119,8 +119,8 @@ class VA_lstm(nn.Module):
         bs = batch_size
         h_0 = Variable(torch.zeros(self.num_layers * self.num_direction, bs, hidden_size))
         c_0 = Variable(torch.zeros(self.num_layers * self.num_direction, bs, hidden_size))
-        torch.nn.init.orthogonal(h_0)
-        torch.nn.init.orthogonal(c_0)
+        torch.nn.init.xavier_normal(h_0)
+        torch.nn.init.xavier_normal(c_0)
         if USE_CUDA:
             h_0 = h_0.cuda()
             c_0 = c_0.cuda()
