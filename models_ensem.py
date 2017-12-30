@@ -70,7 +70,7 @@ class VAMetric_conv(nn.Module):
 
 
 class VA_lstm(nn.Module):
-    def __init__(self, hidden_size=128 * 3, num_layers=5):
+    def __init__(self, hidden_size=128 * 3, num_layers=2):
         super(VA_lstm, self).__init__()
 
         self.hidden_size = hidden_size
@@ -92,7 +92,7 @@ class VA_lstm(nn.Module):
 
         self.dp = nn.Dropout(p=0.3)
         self.vafc1 = nn.Linear(16 * 118, 1024)
-        self.vafc2 = nn.Linear(1024, 1024)
+        self.vafc2 = nn.Linear(1024, 2)
         self.vafc3 = nn.Linear(1024, 2)
 
         self.Linear_init()
@@ -120,8 +120,7 @@ class VA_lstm(nn.Module):
         va = va.view(bs, -1)
 
         va = F.relu(self.vafc1(va))
-        va = F.relu(self.vafc2(va))
-        sim = F.softmax(self.vafc3(va))
+        sim = F.softmax(self.vafc2(va))
 
         return sim
 
