@@ -236,9 +236,9 @@ class lstm_loss(nn.Module):
         loss_nega = torch.mean(F.relu(torch.pow(sim_0[bs / 2:bs], 1)))
 
         loss_balance1 = F.relu(
-            0.9 - (torch.mean(torch.pow(sim_0[0:bs / 2], 1)) - torch.mean(torch.pow(sim_0[bs / 2:bs], 1))))
+            0.95 - (torch.mean(torch.pow(sim_0[0:bs / 2], 1)) - torch.mean(torch.pow(sim_0[bs / 2:bs], 1))))
         loss_balance2 = F.relu(
-            0.9 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 1)) - torch.mean(torch.pow(sim_1[0:bs / 2], 1))))
+            0.95 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 1)) - torch.mean(torch.pow(sim_1[0:bs / 2], 1))))
 
         loss = 0.1 * loss_nega + 0.1 * loss_posi + 1 * loss_balance1 + 0 * loss_balance2
 
