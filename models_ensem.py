@@ -171,11 +171,11 @@ class VA_lstm(nn.Module):
         if self.bidirection:
             self.num_direction = 2
 
-        self.vfc1 = nn.Linear(1024,128)
-        self.afc1 = nn.Linear(128,128)
+        self.vfc1 = nn.Linear(1024,256)
+        self.afc1 = nn.Linear(128,256)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128*5),
-                               stride=128)  # output bn * 16 * 118
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 256*5),
+                               stride=256)  # output bn * 16 * 118
 
         self.dp = nn.Dropout(p=0.3)
         self.vafc1 = nn.Linear(32*116, 1024)
