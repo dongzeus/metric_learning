@@ -101,11 +101,10 @@ class VA_lstm(nn.Module):
                                stride=128 * 3 * 2)  # output bn * 16 * 118
         self.mp1 = nn.MaxPool1d(kernel_size=3)  # bn * 16 * 39
         self.conv2 = nn.Conv1d(in_channels=16, out_channels=16, kernel_size=4, stride=1)  # bn * 16 * 36
-        self.mp2 = nn.MaxPool1d(kernel_size=4)  # bn * 16 * 9
 
         self.dp = nn.Dropout(p=0.3)
-        self.vafc1 = nn.Linear(16 * 9, 128)
-        self.vafc2 = nn.Linear(128, 2)
+        self.vafc1 = nn.Linear(16 * 36, 512)
+        self.vafc2 = nn.Linear(512, 2)
         self.vafc3 = nn.Linear(1024, 2)
 
         self.Linear_init()
@@ -134,7 +133,6 @@ class VA_lstm(nn.Module):
         va = self.dp(va)
         va = self.mp1(va)
         va = self.conv2(va)
-        va = self.mp2(va)
         va = va.view(bs, -1)
 
         va = F.relu(self.vafc1(va))
