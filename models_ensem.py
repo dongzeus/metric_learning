@@ -86,27 +86,31 @@ class VA_lstm(nn.Module):
 
         self.alstm = nn.LSTM(input_size=128, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
                              batch_first=True, bidirectional=self.bidirection)
-        self.fc1 = nn.Linear(128, 64)
-        self.fc2 = nn.Linear(64, 64)
-        self.fc3 = nn.Linear(64*120*2,1)
+
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn * 32 * 120
+        self.dp = nn.Dropout(p=0.2)
+        self.fc1 = nn.Linear(120 * 32, 1024)
+        self.fc2 = nn.Linear(1024, 1024)
+        self.fc3 = nn.Linear(1024, 1)
         self.Linear_init()
 
     def forward(self, vfeat, afeat):
         bs = vfeat.size(0)
 
-        vlstm_out = self.vlstm(vfeat, self.param_init(batch_size=bs))[0]
-        alstm_out = self.alstm(afeat, self.param_init(batch_size=bs))[0]
+        vfeat = self.vlstm(vfeat, self.param_init(batch_size=bs))[0]
+        afeat = self.alstm(afeat, self.param_init(batch_size=bs))[0]
 
-        vlstm_out = F.relu(self.fc1(vlstm_out))
-        vlstm_out = F.relu(self.fc2(vlstm_out))
-        vlstm_out = vlstm_out.view(bs, -1)
+        vfeat = vfeat.view(bs, 1, 1, -1)
+        afeat = afeat.view(bs, 1, 1, -1)
+        vafeat = torch.cat((vfeat, afeat), dim=2)
+        vafeat = self.conv1(vafeat)
+        vafeat = self.dp(vafeat)
 
-        alstm_out = F.relu(self.fc1(alstm_out))
-        alstm_out = F.relu(self.fc2(alstm_out))
-        alstm_out = alstm_out.view(bs, -1)
+        vafeat = vafeat.view(bs, -1)
+        vafeat = F.relu(self.fc1(vafeat))
+        vafeat = F.relu(self.fc2(vafeat))
+        sim = F.tanh(self.fc3(vafeat))
 
-        va = torch.cat((vlstm_out, alstm_out), dim=1)
-        sim = F.tanh(self.fc3(va))
 
         return sim
 
