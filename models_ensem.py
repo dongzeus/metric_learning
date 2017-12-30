@@ -89,10 +89,10 @@ class VA_lstm(nn.Module):
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn * 32 * 120
         self.dp = nn.Dropout(p=0.2)
-        self.vfc = nn.Linear(1024,128)
+        self.vfc = nn.Linear(1024, 128)
         self.fc1 = nn.Linear(120 * 32, 1024)
         self.fc2 = nn.Linear(1024, 1024)
-        self.fc3 = nn.Linear(1024, 1)
+        self.fc3 = nn.Linear(1024, 2)
         self.Linear_init()
 
     def forward(self, vfeat, afeat):
@@ -111,7 +111,7 @@ class VA_lstm(nn.Module):
         vafeat = vafeat.view(bs, -1)
         vafeat = F.relu(self.fc1(vafeat))
         vafeat = F.relu(self.fc2(vafeat))
-        sim = F.tanh(self.fc3(vafeat))
+        sim = F.softmax(self.fc3(vafeat))
 
         return sim
 
@@ -141,8 +141,10 @@ class lstm_loss(nn.Module):
         super(lstm_loss, self).__init__()
 
     def forward(self, sim, target, margin=1):
-        loss_posi = torch.mean(F.relu(0.9 - (1 - target) * sim))
-        loss_nega = torch.mean(F.relu(0.9 + target * sim))
+        sim_0 = sim[:,0]
+        sim_1 = sim[:,1]
+        loss_posi = torch.mean(F.relu((1 - target) * sim_1))
+        loss_nega = torch.mean(F.relu(target * sim_0))
         loss = (loss_nega + loss_posi) / 2
 
         print(loss_posi.data[0], loss_nega.data[0])
