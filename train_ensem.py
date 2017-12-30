@@ -111,8 +111,6 @@ def pca_tensor(tensor, dim, feat, pr=False):
     return tensor_new
 
 
-
-
 # training function for metric learning
 def train(train_loader, model, criterion, optimizer, epoch, opt, num):
     """
@@ -133,9 +131,8 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, num):
     for i, (vfeat, afeat) in enumerate(train_loader):
         # shuffling the index orders
 
-        # vfeat = pca_tensor(vfeat,dim=1024,pr=True,feat='vfeat')
-        # afeat = pca_tensor(afeat,dim=128,pr=True,feat='afeat')
-
+        vfeat = pca_tensor(vfeat, dim=1024, pr=True, feat='vfeat')
+        afeat = pca_tensor(afeat, dim=128, pr=True, feat='afeat')
 
         bz = vfeat.size()[0]
         orders = np.arange(bz).astype('int32')
@@ -229,7 +226,6 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, num):
         # gradient clip stuff
         ##############################
         torch.nn.utils.clip_grad_norm(model.parameters(), opt.gradient_clip)
-
 
         # update parameters
         optimizer.step()

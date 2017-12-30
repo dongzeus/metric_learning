@@ -32,6 +32,7 @@ import numpy as np
 import models_ensem as models
 from dataset import VideoFeatDataset as dset
 from tools import utils
+from sklearn.decomposition import PCA
 
 # reminding the cuda option
 if torch.cuda.is_available():
@@ -45,6 +46,36 @@ test_video_dataset = dset(root=opt.data_dir, flist=opt.video_flist, which_feat='
 test_audio_dataset = dset(root=opt.data_dir, flist=opt.audio_flist, which_feat='afeat', creat_test=0)
 print('number of test samples is: {0}'.format(len(test_video_dataset)))
 print('finished loading data')
+
+def pca_tensor(tensor, dim, feat, pr=False):
+    if feat == 'vfeat':
+        n_component = opt.vfeat_pca
+    elif feat == 'afeat':
+        n_component = opt.afeat_pca
+    else:
+        exit()
+
+    bs = tensor.size(0)
+    pca = PCA(n_components=n_component)
+    if isinstance(tensor, Variable):
+        tensor_np = tensor.data.numpy()
+    else:
+        tensor_np = tensor.numpy()
+    tensor_np.resize(bs * 120, dim)
+    pca.fit(tensor_np)
+    tensor_np = pca.transform(tensor_np)
+    tensor_np.resize(bs, 120, n_component)
+    tensor_new = torch.from_numpy(tensor_np)
+    if isinstance(tensor, Variable):
+        tensor_new = Variable(tensor_new)
+        if opt.cuda:
+            tensor_new = tensor_new.cuda()
+
+    if pr:
+        print('afeat PCA variance ratio:')
+        print(pca.explained_variance_ratio_)
+        print(np.sum(pca.explained_variance_ratio_))
+    return tensor_new
 
 
 # test function for metric learning
@@ -72,6 +103,8 @@ def test(video_loader, audio_loader, model_ls, opt):
             sample_num += bz
             for j, afeat in enumerate(audio_loader):
                 for k in np.arange(bz):
+                    vfeat = pca_tensor(vfeat, dim=1024, pr=True, feat='vfeat')
+                    afeat = pca_tensor(afeat, dim=128, pr=True, feat='afeat')
                     cur_vfeat = vfeat[k].clone()
                     cur_vfeats = cur_vfeat.repeat(bz, 1, 1)
 

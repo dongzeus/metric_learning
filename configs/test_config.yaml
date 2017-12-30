@@ -13,3 +13,4 @@ topk: 5
 init_encoder: ''
 init_decoder: ''
 afeat_pca: 32
+vfeat_pca: 72

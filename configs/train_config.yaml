@@ -28,5 +28,5 @@ init_model: ''
 init_model_epoch: ''
 model_number: 1
 afeat_pca: 32
-vfeat_pca: 72
+vfeat_pca: 96
 teaching_ratio: 0.9
