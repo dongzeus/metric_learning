@@ -157,7 +157,7 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
         decoder_input = encoder_output[:, 119, :].clone()  # bs * 128
         pca = PCA(n_components=opt.afeat_pca)
         pca.fit(decoder_input.cpu().data.numpy())
-        decoder_input = Variable(torch.from_numpy(pca.transform(decoder_input.data.numpy())))
+        decoder_input = Variable(torch.from_numpy(pca.transform(decoder_input.cpu().data.numpy())))
         if opt.cuda:
             decoder_input = decoder_input.cuda()
         decoder_context = torch.mean(encoder_output, dim=1)  # bs * 128
