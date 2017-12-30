@@ -93,6 +93,10 @@ class VA_lstm(nn.Module):
         self.fc1 = nn.Linear(120 * 32, 1024)
         self.fc2 = nn.Linear(1024, 1024)
         self.fc3 = nn.Linear(1024, 2)
+        self.vafc1 = nn.Linear(256, 256)
+        self.vafc2 = nn.Linear(256, 256)
+        self.vafc3 = nn.Linear(256, 2)
+
         self.Linear_init()
 
     def forward(self, vfeat, afeat):
@@ -101,17 +105,25 @@ class VA_lstm(nn.Module):
         vfeat = self.vlstm(vfeat, self.param_init(batch_size=bs))[0]
         afeat = self.alstm(afeat, self.param_init(batch_size=bs))[0]
 
-        # vfeat = F.relu(self.vfc(vfeat))
-        vfeat = vfeat.resize(bs, 1, 1, 120 * 128)
-        afeat = afeat.resize(bs, 1, 1, 120 * 128)
-        vafeat = torch.cat((vfeat, afeat), dim=2)
-        vafeat = self.conv1(vafeat)
-        vafeat = self.dp(vafeat)
+        vfeat = vfeat[:, 119, :]
+        afeat = afeat[:, 119, :]
+        va = torch.cat((vfeat, afeat), dim=1)
+        va = F.relu(self.vafc1(va))
+        va = F.relu(self.vafc2(va))
+        sim = F.softmax(self.vafc3(va))
 
-        vafeat = vafeat.view(bs, -1)
-        vafeat = F.relu(self.fc1(vafeat))
-        vafeat = F.relu(self.fc2(vafeat))
-        sim = F.softmax(self.fc3(vafeat))
+        #
+        # vfeat = F.relu(self.vfc(vfeat))
+        # vfeat = vfeat.resize(bs, 1, 1, 120 * 128)
+        # afeat = afeat.resize(bs, 1, 1, 120 * 128)
+        # vafeat = torch.cat((vfeat, afeat), dim=2)
+        # vafeat = self.conv1(vafeat)
+        # vafeat = self.dp(vafeat)
+
+        # vafeat = vafeat.view(bs, -1)
+        # vafeat = F.relu(self.fc1(vafeat))
+        # vafeat = F.relu(self.fc2(vafeat))
+        # sim = F.softmax(self.fc3(vafeat))
 
         return sim
 
@@ -141,8 +153,8 @@ class lstm_loss(nn.Module):
         super(lstm_loss, self).__init__()
 
     def forward(self, sim, target, margin=1):
-        sim_0 = sim[:,0]
-        sim_1 = sim[:,1]
+        sim_0 = sim[:, 0]
+        sim_1 = sim[:, 1]
         loss_posi = torch.mean(F.relu((1 - target) * sim_1))
         loss_nega = torch.mean(F.relu(target * sim_0))
         loss = (loss_nega + loss_posi) / 2

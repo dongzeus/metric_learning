@@ -47,7 +47,7 @@ tds_ls = []
 for i in range(opt.model_number):
     if i == 0:
         tds_ls.append(VideoFeatDataset(root=opt.data_dir, flist=opt.flist, test_list=opt.test_flist,
-                                       test_number=opt.test_number, bagging=True, creat_test=True))
+                                       test_number=opt.test_number, bagging=False, creat_test=True))
     else:
         tds_ls.append(VideoFeatDataset(root=opt.data_dir, flist=opt.flist, bagging=True, creat_test=False,
                                        test_list_pass=tds_ls[0].get_ori_pathlist()))
