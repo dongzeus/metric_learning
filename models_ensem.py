@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
 
-USE_CUDA = False
+USE_CUDA = True
 
 
 class VAMetric_conv(nn.Module):

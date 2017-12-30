@@ -1,5 +1,5 @@
-#cuda: True
-cuda: False
+cuda: True
+#cuda: False
 ngpu: 1
 gpu_id: '0'
 data_dir: ../Train     # Your dataset path
