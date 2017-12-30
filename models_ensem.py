@@ -3,9 +3,20 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
+from optparse import OptionParser
+from tools.config_tools import Config
 
 USE_CUDA = True
 
+parser = OptionParser()
+parser.add_option('--config',
+                  type=str,
+                  help="training configuration",
+                  default="./configs/train_config.yaml")
+
+(opts, args) = parser.parse_args()
+assert isinstance(opts, object)
+opt = Config(opts.config)
 
 class VAMetric_conv(nn.Module):
     def __init__(self, framenum=120):
@@ -69,6 +80,7 @@ class VAMetric_conv(nn.Module):
         return result
 
 
+
 class VA_lstm(nn.Module):
     def __init__(self, hidden_size=128 * 3, num_layers=2):
         super(VA_lstm, self).__init__()
@@ -98,6 +110,7 @@ class VA_lstm(nn.Module):
 
     def forward(self, vfeat, afeat):
         bs = vfeat.size(0)
+
         for seq in range(118):
             if seq == 0:
                 vfeat_3 = vfeat[:, seq:seq + 3, :].resize(bs, 1, 3 * 1024)
@@ -143,7 +156,6 @@ class VA_lstm(nn.Module):
                 nn.init.xavier_normal(m.weight)
                 nn.init.constant(m.bias, 0)
 
-
 class lstm_loss(nn.Module):
     def __init__(self):
         super(lstm_loss, self).__init__()
@@ -155,15 +167,38 @@ class lstm_loss(nn.Module):
         loss_posi = torch.mean(F.relu(torch.pow(sim_1[0:bs / 2], 1)))
         loss_nega = torch.mean(F.relu(torch.pow(sim_0[bs / 2:bs], 1)))
 
-        loss_balance1 = torch.mean(torch.clamp(margin - (sim_0[0:bs / 2] - sim_0[bs / 2:bs]), min=0))
-
+        loss_balance1 = F.relu(
+            0.9 - (torch.mean(torch.pow(sim_0[0:bs / 2], 1)) - torch.mean(torch.pow(sim_0[bs / 2:bs], 1))))
         loss_balance2 = F.relu(
             0.9 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 1)) - torch.mean(torch.pow(sim_1[0:bs / 2], 1))))
 
         loss = 0.1 * loss_nega + 0.1 * loss_posi + 1 * loss_balance1 + 0 * loss_balance2
 
-        print(loss_posi.data[0], loss_nega.data[0], loss_balance1.data[0])
+        print(loss_posi.data[0], loss_nega.data[0], loss_balance1.data[0], loss_balance2.data[0])
         return loss
+
+# class lstm_loss(nn.Module):
+#     def __init__(self):
+#         super(lstm_loss, self).__init__()
+#
+#     def forward(self, sim, target, margin=1):
+#         bs = sim.size(0)
+#         sim_0 = sim[:, 0]
+#         sim_1 = sim[:, 1]
+#         loss_posi = torch.mean(F.relu(torch.pow(sim_1[0:bs / 2], 1)))
+#         loss_nega = torch.mean(F.relu(torch.pow(sim_0[bs / 2:bs], 1)))
+#
+#         loss_balance1 = torch.mean(torch.clamp(margin - (sim_0[0:bs / 2] - sim_0[bs / 2:bs]), min=0))
+#
+#         loss_balance2 = F.relu(
+#             0.9 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 1)) - torch.mean(torch.pow(sim_1[0:bs / 2], 1))))
+#
+#         loss = 0.1 * loss_nega + 0.1 * loss_posi + 1 * loss_balance1 + 0 * loss_balance2
+#
+#         print(loss_posi.data[0], loss_nega.data[0], loss_balance1.data[0])
+#         return loss
+#
+
 
     # def forward(self, sim, target, margin=0.5):
     #     bs = sim.size(0)

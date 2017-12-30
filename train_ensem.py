@@ -18,7 +18,7 @@ import models_ensem as models
 from dataset_ensem import VideoFeatDataset
 from tools.config_tools import Config
 from tools import utils
-
+from sklearn.decomposition import PCA
 import matplotlib as mpl
 
 mpl.use('Agg')
@@ -80,6 +80,39 @@ else:
 print('Random Seed: {0}'.format(opt.manualSeed))
 
 
+def pca_tensor(tensor, dim, feat, pr=False):
+    if feat == 'vfeat':
+        n_component = opt.vfeat_pca
+    elif feat == 'afeat':
+        n_component = opt.afeat_pca
+    else:
+        exit()
+
+    bs = tensor.size(0)
+    pca = PCA(n_components=n_component)
+    if isinstance(tensor, Variable):
+        tensor_np = tensor.data.numpy()
+    else:
+        tensor_np = tensor.numpy()
+    tensor_np.resize(bs * 120, dim)
+    pca.fit(tensor_np)
+    tensor_np = pca.transform(tensor_np)
+    tensor_np.resize(bs, 120, n_component)
+    tensor_new = torch.from_numpy(tensor_np)
+    if isinstance(tensor, Variable):
+        tensor_new = Variable(tensor_new)
+        if opt.cuda:
+            tensor_new = tensor_new.cuda()
+
+    if pr:
+        print('afeat PCA variance ratio:')
+        print(pca.explained_variance_ratio_)
+        print(np.sum(pca.explained_variance_ratio_))
+    return tensor_new
+
+
+
+
 # training function for metric learning
 def train(train_loader, model, criterion, optimizer, epoch, opt, num):
     """
@@ -99,6 +132,11 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, num):
 
     for i, (vfeat, afeat) in enumerate(train_loader):
         # shuffling the index orders
+
+        # vfeat = pca_tensor(vfeat,dim=1024,pr=True,feat='vfeat')
+        # afeat = pca_tensor(afeat,dim=128,pr=True,feat='afeat')
+
+
         bz = vfeat.size()[0]
         orders = np.arange(bz).astype('int32')
         shuffle_orders = orders.copy()
