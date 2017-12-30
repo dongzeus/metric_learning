@@ -20,7 +20,7 @@ USE_CUDA = opt.cuda
 
 
 class Encoder(nn.Module):
-    def __init__(self, num_layer=5, hidden_size=128):
+    def __init__(self, num_layer=2, hidden_size=128):
         super(Encoder, self).__init__()
 
         self.num_layer = num_layer
@@ -91,7 +91,7 @@ class Attn(nn.Module):
 
 
 class AttnDecoder(nn.Module):
-    def __init__(self, attn_model='general', hidden_size=128, output_size=opt.afeat_pca, n_layers=5, dropout_p=0.1):
+    def __init__(self, attn_model='general', hidden_size=128, output_size=opt.afeat_pca, n_layers=2, dropout_p=0.1):
         super(AttnDecoder, self).__init__()
 
         # Keep parameters for reference

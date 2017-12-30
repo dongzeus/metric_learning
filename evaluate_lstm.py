@@ -3,7 +3,7 @@ from __future__ import division
 import os
 from optparse import OptionParser
 from tools.config_tools import Config
-
+from sklearn.decomposition import PCA
 # ----------------------------------- loading paramters -------------------------------------------#
 parser = OptionParser()
 parser.add_option('--config',
@@ -94,6 +94,12 @@ def test(video_loader, audio_loader, model_ls, opt):
 
             decoder_hidden = encoder_hidden
             decoder_input = encoder_output[:, 119, :]  # bs * 128
+            pca = PCA(n_components=opt.afeat_pca)
+            pca.fit(decoder_input.cpu().data.numpy())
+            decoder_input = Variable(torch.from_numpy(pca.transform(decoder_input.cpu().data.numpy())))
+            if opt.cuda:
+                decoder_input = decoder_input.cuda()
+
             decoder_context = torch.mean(encoder_output, dim=1)  # bs * 128
 
             # Generate the audio from video feature
