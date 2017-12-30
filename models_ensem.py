@@ -100,12 +100,12 @@ class VA_lstm(nn.Module):
         bs = vfeat.size(0)
         for seq in range(117):
             if seq == 0:
-                vfeat_3 = vfeat[:, seq:seq + 2, :].view(bs, 1, -1)
-                afeat_3 = afeat[:, seq:seq + 2, :].view(bs, 1, -1)
+                vfeat_3 = vfeat[:, seq:seq + 3, :].resize(bs, 1, 3*1024)
+                afeat_3 = afeat[:, seq:seq + 3, :].resize(bs, 1, 3*128)
 
             else:
-                vfeat_3 = torch.cat((vfeat_3, vfeat[:, seq:seq + 2, :].view(bs, 1, -1)), dim=1)
-                afeat_3 = torch.cat((afeat_3, afeat[:, seq:seq + 2, :].view(bs, 1, -1)), dim=1)
+                vfeat_3 = torch.cat((vfeat_3, vfeat[:, seq:seq + 3, :].resize(bs, 1, 3*1024)), dim=1)
+                afeat_3 = torch.cat((afeat_3, afeat[:, seq:seq + 3, :].resize(bs, 1, 3*128)), dim=1)
 
         vlstm = self.vlstm(vfeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
         alstm = self.alstm(afeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
