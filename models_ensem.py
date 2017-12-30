@@ -174,13 +174,12 @@ class VA_lstm(nn.Module):
         self.vfc1 = nn.Linear(1024,128)
         self.afc1 = nn.Linear(128,128)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128*3),
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128*5),
                                stride=128)  # output bn * 16 * 118
 
         self.dp = nn.Dropout(p=0.3)
-        self.vafc1 = nn.Linear(32*118, 1024)
+        self.vafc1 = nn.Linear(32*116, 1024)
         self.vafc2 = nn.Linear(1024, 2)
-####
         self.Linear_init()
 
     def forward(self, vfeat, afeat):
