@@ -89,6 +89,7 @@ class VA_lstm(nn.Module):
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128), stride=128)  # output bn * 32 * 120
         self.dp = nn.Dropout(p=0.2)
+        self.vfc = nn.Linear(1024,128)
         self.fc1 = nn.Linear(120 * 32, 1024)
         self.fc2 = nn.Linear(1024, 1024)
         self.fc3 = nn.Linear(1024, 1)
@@ -97,9 +98,9 @@ class VA_lstm(nn.Module):
     def forward(self, vfeat, afeat):
         bs = vfeat.size(0)
 
-        vfeat = self.vlstm(vfeat, self.param_init(batch_size=bs))[0]
-        afeat = self.alstm(afeat, self.param_init(batch_size=bs))[0]
-
+        # vfeat = self.vlstm(vfeat, self.param_init(batch_size=bs))[0]
+        # afeat = self.alstm(afeat, self.param_init(batch_size=bs))[0]
+        vfeat = self.vfc(vfeat)
         vfeat = vfeat.resize(bs, 1, 1, 120 * 128)
         afeat = afeat.resize(bs, 1, 1, 120 * 128)
         vafeat = torch.cat((vfeat, afeat), dim=2)
