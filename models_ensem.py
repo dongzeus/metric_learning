@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
 
-USE_CUDA = True
+USE_CUDA = False
 
 
 class VAMetric_conv(nn.Module):
@@ -98,7 +98,7 @@ class VA_lstm(nn.Module):
 
     def forward(self, vfeat, afeat):
         bs = vfeat.size(0)
-        for seq in range(117):
+        for seq in range(118):
             if seq == 0:
                 vfeat_3 = vfeat[:, seq:seq + 3, :].resize(bs, 1, 3*1024)
                 afeat_3 = afeat[:, seq:seq + 3, :].resize(bs, 1, 3*128)
