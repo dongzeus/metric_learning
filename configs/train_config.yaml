@@ -10,11 +10,11 @@ workers: 4
 batchSize: 64
 manualSeed: 
 adam: True
-lr: 0.001
+lr: 0.0001
 lr_decay: 0.85
 lr_decay_epoch: 5
 momentum: 0.9
-weight_decay: 0.001
+weight_decay: 0.0001
 max_epochs: 100
 print_freq: 3
 epoch_save: 5
