@@ -3,8 +3,20 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
+from optparse import OptionParser
+from tools.config_tools import Config
 
-USE_CUDA = True
+parser = OptionParser()
+parser.add_option('--config',
+                  type=str,
+                  help="training configuration",
+                  default="./configs/train_config.yaml")
+
+(opts, args) = parser.parse_args()
+assert isinstance(opts, object)
+opt = Config(opts.config)
+
+USE_CUDA = opt.cuda
 
 
 class Encoder(nn.Module):
@@ -79,7 +91,7 @@ class Attn(nn.Module):
 
 
 class AttnDecoder(nn.Module):
-    def __init__(self, attn_model='general', hidden_size=128, output_size=128, n_layers=5, dropout_p=0.1):
+    def __init__(self, attn_model='general', hidden_size=128, output_size=opt.afeat_pca, n_layers=5, dropout_p=0.1):
         super(AttnDecoder, self).__init__()
 
         # Keep parameters for reference
@@ -90,8 +102,7 @@ class AttnDecoder(nn.Module):
         self.dropout_p = dropout_p
 
         # Define layers
-        self.embedding = nn.Embedding(output_size, hidden_size)
-        self.gru = nn.GRU(hidden_size * 2, hidden_size, n_layers, dropout=dropout_p, batch_first=True)
+        self.gru = nn.GRU(hidden_size + output_size, hidden_size, n_layers, dropout=dropout_p, batch_first=True)
         self.audio_form = nn.Linear(hidden_size * 2, output_size)
 
         # Choose attention model

@@ -19,7 +19,7 @@ max_epochs: 100
 print_freq: 3
 epoch_save: 5
 epoch_plot: 5
-epoch_test: 5
+epoch_test: 1
 checkpoint_folder: ./checkpoints
 prefix: 'VA_LSTM'
 model: ''
@@ -27,3 +27,4 @@ gradient_clip: 5
 init_model: ''
 init_model_epoch: ''
 model_number: 1
+afeat_pca: 32

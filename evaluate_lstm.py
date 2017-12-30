@@ -46,6 +46,29 @@ test_audio_dataset = dset(root=opt.data_dir, flist=opt.audio_flist, which_feat='
 print('number of test samples is: {0}'.format(len(test_video_dataset)))
 print('finished loading data')
 
+def pca_tensor(tensor, pr=False):
+    bs = tensor.size(0)
+    pca = PCA(n_components=opt.afeat_pca)
+    if isinstance(tensor, Variable):
+        tensor_np = tensor.data.numpy()
+    else:
+        tensor_np = tensor.numpy()
+    tensor_np.resize(bs * 120, 128)
+    pca.fit(tensor_np)
+    tensor_np = pca.transform(tensor_np)
+    tensor_np.resize(bs, 120, opt.afeat_pca)
+    tensor_new = torch.from_numpy(tensor_np)
+    if isinstance(tensor,Variable):
+        tensor_new = Variable(tensor_new)
+        if opt.cuda:
+            tensor_new = tensor_new.cuda()
+
+    if pr:
+        print('afeat PCA variance ratio:')
+        print(pca.explained_variance_ratio_)
+        print(np.sum(pca.explained_variance_ratio_))
+    return tensor_new
+
 
 # test function for metric learning
 def test(video_loader, audio_loader, model_ls, opt):
@@ -89,6 +112,7 @@ def test(video_loader, audio_loader, model_ls, opt):
 
         # audio_target is the ground truth of audio
         for j, afeat in enumerate(audio_loader):
+            afeat = pca_tensor(afeat, pr=True)
             afeat_var = Variable(afeat, volatile=True)
             if opt.cuda:
                 afeat_var = afeat_var.cuda()

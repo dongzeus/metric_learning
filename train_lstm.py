@@ -7,6 +7,7 @@ import time
 import os
 import numpy as np
 from optparse import OptionParser
+from sklearn.decomposition import PCA
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -83,6 +84,30 @@ else:
 print('Random Seed: {0}'.format(opt.manualSeed))
 
 
+def pca_tensor(tensor, pr=False):
+    bs = tensor.size(0)
+    pca = PCA(n_components=opt.afeat_pca)
+    if isinstance(tensor, Variable):
+        tensor_np = tensor.data.numpy()
+    else:
+        tensor_np = tensor.numpy()
+    tensor_np.resize(bs * 120, 128)
+    pca.fit(tensor_np)
+    tensor_np = pca.transform(tensor_np)
+    tensor_np.resize(bs, 120, opt.afeat_pca)
+    tensor_new = torch.from_numpy(tensor_np)
+    if isinstance(tensor,Variable):
+        tensor_new = Variable(tensor_new)
+        if opt.cuda:
+            tensor_new = tensor_new.cuda()
+
+    if pr:
+        print('afeat PCA variance ratio:')
+        print(pca.explained_variance_ratio_)
+        print(np.sum(pca.explained_variance_ratio_))
+    return tensor_new
+
+
 # training function for metric learning
 def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_optim, epoch, opt, num):
     """
@@ -106,6 +131,10 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
 
         bs = vfeat.size()[0]
         seq_length = 120
+
+        # do PCA for afeat
+        afeat = pca_tensor(afeat, pr=True)
+
         vfeat = Variable(vfeat)
         target = Variable(afeat)
 
@@ -125,7 +154,12 @@ def train(train_loader, encoder, decoder, criterion, encoder_optim, decoder_opti
 
         # decoder
         decoder_hidden = encoder_hidden
-        decoder_input = encoder_output[:, 119, :]  # bs * 128
+        decoder_input = encoder_output[:, 119, :].clone()  # bs * 128
+        pca = PCA(n_components=opt.afeat_pca)
+        pca.fit(decoder_input.data.numpy())
+        decoder_input = Variable(torch.from_numpy(pca.transform(decoder_input.data.numpy())))
+        if opt.cuda:
+            decoder_input = decoder_input.cuda()
         decoder_context = torch.mean(encoder_output, dim=1)  # bs * 128
 
         teaching = random.random() < teaching_ratio
@@ -263,17 +297,18 @@ def main():
         if ((epoch + 1) % opt.epoch_save) == 0:
             for i in range(opt.model_number):
                 m = model_ls[i]
-                encoder_path_checkpoint = '{0}/{1}_state_epoch{2}_encoder_model_{3}.pth'.format(opt.checkpoint_folder, opt.prefix,
-                                                                               epoch + 1, i + 1)
+                encoder_path_checkpoint = '{0}/{1}_state_epoch{2}_encoder_model_{3}.pth'.format(opt.checkpoint_folder,
+                                                                                                opt.prefix,
+                                                                                                epoch + 1, i + 1)
                 utils.save_checkpoint(m[0].state_dict(), encoder_path_checkpoint)
 
-                decoder_path_checkpoint = '{0}/{1}_state_epoch{2}_decoder_model_{3}.pth'.format(opt.checkpoint_folder, opt.prefix,
-                                                                               epoch + 1, i + 1)
+                decoder_path_checkpoint = '{0}/{1}_state_epoch{2}_decoder_model_{3}.pth'.format(opt.checkpoint_folder,
+                                                                                                opt.prefix,
+                                                                                                epoch + 1, i + 1)
                 utils.save_checkpoint(m[1].state_dict(), decoder_path_checkpoint)
 
                 print('Save encoder model to {0}'.format(encoder_path_checkpoint))
                 print('Save decoder model to {0}'.format(decoder_path_checkpoint))
-
 
         if ((epoch + 1) % opt.epoch_plot) == 0:
             plt.figure(1)
