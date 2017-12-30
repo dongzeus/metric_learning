@@ -16,7 +16,7 @@ lr_decay_epoch: 5
 momentum: 0.9
 weight_decay: 0.0001
 max_epochs: 100
-print_freq: 3
+print_freq: 1
 epoch_save: 5
 epoch_plot: 5
 epoch_test: 1

@@ -237,8 +237,10 @@ def main():
     for m in model_ls:
         encoder = m[0]
         decoder = m[1]
-        encoder_optim = optim.Adam(encoder.parameters(), lr=opt.lr)
-        decoder_optim = optim.Adam(decoder.parameters(), lr=opt.lr)
+        # encoder_optim = optim.Adam(encoder.parameters(), lr=opt.lr)
+        # decoder_optim = optim.Adam(decoder.parameters(), lr=opt.lr)
+        encoder_optim = optim.SGD(encoder.parameters(), lr=opt.lr, weight_decay=opt.weight_decay, momentum=opt.momentum)
+        decoder_optim = optim.SGD(decoder.parameters(), lr=opt.lr, weight_decay=opt.weight_decay, momentum=opt.momentum)
         op = [encoder_optim, decoder_optim]
         opt_ls.append(op)
 
