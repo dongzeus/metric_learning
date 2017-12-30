@@ -100,8 +100,8 @@ class VA_lstm(nn.Module):
         vfeat = self.vlstm(vfeat, self.param_init(batch_size=bs))[0]
         afeat = self.alstm(afeat, self.param_init(batch_size=bs))[0]
 
-        vfeat = vfeat.view(bs, 1, 1, -1)
-        afeat = afeat.view(bs, 1, 1, -1)
+        vfeat = vfeat.resize(bs, 1, 1, 120 * 128)
+        afeat = afeat.resize(bs, 1, 1, 120 * 128)
         vafeat = torch.cat((vfeat, afeat), dim=2)
         vafeat = self.conv1(vafeat)
         vafeat = self.dp(vafeat)
@@ -110,7 +110,6 @@ class VA_lstm(nn.Module):
         vafeat = F.relu(self.fc1(vafeat))
         vafeat = F.relu(self.fc2(vafeat))
         sim = F.tanh(self.fc3(vafeat))
-
 
         return sim
 
