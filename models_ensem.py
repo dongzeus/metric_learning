@@ -70,7 +70,7 @@ class VAMetric_conv(nn.Module):
 
 
 class VA_lstm(nn.Module):
-    def __init__(self, hidden_size=128 * 3, num_layers=5):
+    def __init__(self, hidden_size=128 * 3, num_layers=2):
         super(VA_lstm, self).__init__()
 
         self.hidden_size = hidden_size
@@ -90,7 +90,7 @@ class VA_lstm(nn.Module):
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 3),
                                stride=128 * 3)  # output bn * 16 * 118
 
-        self.dp = nn.Dropout(p=0.5)
+        self.dp = nn.Dropout(p=0.1)
         self.vafc1 = nn.Linear(16 * 118, 1024)
         self.vafc2 = nn.Linear(1024, 1024)
         self.vafc3 = nn.Linear(1024, 2)
@@ -158,7 +158,7 @@ class lstm_loss(nn.Module):
         loss_nega = torch.mean(F.relu(torch.pow(sim_0[bs / 2:bs], 1)))
         loss_balance = F.relu(
             0.9 - (torch.mean(torch.pow(sim_0[0:bs / 2], 2)) - torch.mean(torch.pow(sim_0[bs / 2:bs], 2))))
-        r = 0.4
+        r = 0.2
         loss = r * loss_nega + (1 - r) * loss_posi + 0.5 * loss_balance
 
         print(loss_posi.data[0], loss_nega.data[0],loss_balance.data[0])
