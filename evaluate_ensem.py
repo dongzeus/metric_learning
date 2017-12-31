@@ -139,7 +139,7 @@ def test(video_loader, audio_loader, model_ls, opt):
             if k in order:
                 right = right + 1
         print('==================================================================================')
-        print('The No.{} similarity matrix: \n {}'.format(num + 1, sim_mat))
+        # print('The No.{} similarity matrix: \n {}'.format(num + 1, sim_mat))
         print('No.{} testing accuracy (top{}): {:.3f}'.format(num + 1, opt.topk, right / sample_num))
         print('==================================================================================')
 

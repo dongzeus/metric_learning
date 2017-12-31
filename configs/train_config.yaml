@@ -26,7 +26,7 @@ model: ''
 gradient_clip: 5
 init_model: ''
 init_model_epoch: ''
-model_number: 1
+model_number: 3
 afeat_pca: 64
 vfeat_pca: 512
 teaching_ratio: 0.9
