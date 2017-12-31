@@ -158,7 +158,7 @@ def test(video_loader, audio_loader, model_ls, opt):
         if k in order:
             right = right + 1
     print('==================================================================================')
-    print('The ensembel similarity matrix: \n {}'.format(simmat_ensem))
+    # print('The ensembel similarity matrix: \n {}'.format(simmat_ensem))
     print('Ensembel testing accuracy (top{}): {:.3f}'.format(opt.topk, right / sample_num))
     print('==================================================================================')
 
