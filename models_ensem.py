@@ -171,14 +171,14 @@ class VA_lstm(nn.Module):
         if self.bidirection:
             self.num_direction = 2
 
-        self.vfc1 = nn.Linear(1024,128)
-        self.afc1 = nn.Linear(128,128)
+        self.vfc1 = nn.Linear(1024, 128)
+        self.afc1 = nn.Linear(128, 128)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(2, 128*5),
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 5),
                                stride=128)  # output bn * 16 * 118
-        
-        self.dp = nn.Dropout(p=0.30)
-        self.vafc1 = nn.Linear(32*116, 1024)
+        self.conv2 = nn.Conv1d(in_channels=16, out_channels=16, kernel_size=8, stride=1)  # bn*16*111
+        self.dp = nn.Dropout(p=0.1)
+        self.vafc1 = nn.Linear(16 * 111, 1024)
         self.vafc2 = nn.Linear(1024, 2)
         self.Linear_init()
 
@@ -188,13 +188,15 @@ class VA_lstm(nn.Module):
         vfeat = F.relu(self.vfc1(vfeat))
         afeat = F.relu((self.afc1(afeat)))
 
-        vlstm = vfeat.resize(bs, 1, 1, 120*128)
-        alstm = afeat.resize(bs, 1, 1, 120*128)
+        vlstm = vfeat.resize(bs, 1, 1, 120 * 128)
+        alstm = afeat.resize(bs, 1, 1, 120 * 128)
 
         va = torch.cat((vlstm, alstm), dim=2)
         va = self.conv1(va)
-        va = va.view(va.size(0), va.size(1), -1)
         va = self.dp(va)
+        va = va.view(va.size(0), va.size(1), -1)
+        va = self.conv2(va)
+        va = va.view(va.size(0), va.size(1), -1)
 
         va = va.view(bs, -1)
 
