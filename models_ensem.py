@@ -178,8 +178,8 @@ class VA_lstm(nn.Module):
                                stride=128)  # output bn * 16 * 118
 
         self.dp = nn.Dropout(p=0.30)
-        self.vafc1 = nn.Linear(32*116, 1024)
-        self.vafc2 = nn.Linear(1024, 2)
+        self.vafc1 = nn.Linear(32*116, 512)
+        self.vafc2 = nn.Linear(512, 2)
         self.Linear_init()
 
     def forward(self, vfeat, afeat):
@@ -232,13 +232,13 @@ class lstm_loss(nn.Module):
         bs = sim.size(0)
         sim_0 = sim[:, 0]
         sim_1 = sim[:, 1]
-        loss_posi = torch.mean(F.relu(torch.pow(sim_1[0:bs / 2], 2)))
-        loss_nega = torch.mean(F.relu(torch.pow(sim_0[bs / 2:bs], 2)))
+        loss_posi = torch.mean(F.relu(torch.pow(sim_1[0:bs / 2], 1)))
+        loss_nega = torch.mean(F.relu(torch.pow(sim_0[bs / 2:bs], 1)))
 
         loss_balance1 = F.relu(
-            0.9 - (torch.mean(torch.pow(sim_0[0:bs / 2], 2)) - torch.mean(torch.pow(sim_0[bs / 2:bs], 2))))
+            0.9 - (torch.mean(torch.pow(sim_0[0:bs / 2], 1)) - torch.mean(torch.pow(sim_0[bs / 2:bs], 1))))
         loss_balance2 = F.relu(
-            0.9 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 2)) - torch.mean(torch.pow(sim_1[0:bs / 2], 2))))
+            0.9 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 1)) - torch.mean(torch.pow(sim_1[0:bs / 2], 1))))
 
         loss = 0.1 * loss_nega + 0.1 * loss_posi + 1 * loss_balance1 + 0 * loss_balance2
 
