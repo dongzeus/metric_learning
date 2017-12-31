@@ -47,6 +47,7 @@ test_audio_dataset = dset(root=opt.data_dir, flist=opt.audio_flist, which_feat='
 print('number of test samples is: {0}'.format(len(test_video_dataset)))
 print('finished loading data')
 
+
 def pca_tensor(tensor, dim, feat, pr=False):
     if feat == 'vfeat':
         n_component = opt.vfeat_pca
@@ -138,15 +139,14 @@ def test(video_loader, audio_loader, model_ls, opt):
             if k in order:
                 right = right + 1
         print('==================================================================================')
-        print('The No.{} similarity matrix: \n {}'.format(num+1,sim_mat))
-        print('No.{} testing accuracy (top{}): {:.3f}'.format(num+1,opt.topk, right / sample_num))
+        print('The No.{} similarity matrix: \n {}'.format(num + 1, sim_mat))
+        print('No.{} testing accuracy (top{}): {:.3f}'.format(num + 1, opt.topk, right / sample_num))
         print('==================================================================================')
 
-
         if num == 0:
-            simmat_ensem = sim_mat
+            simmat_ensem = torch.pow(sim_mat, 2)
         else:
-            simmat_ensem = simmat_ensem + sim_mat
+            simmat_ensem = simmat_ensem + torch.pow(sim_mat, 2)
 
     sorted, indices = torch.sort(simmat_ensem, 0, descending=True)
     np_indices = indices.cpu().data.numpy()
