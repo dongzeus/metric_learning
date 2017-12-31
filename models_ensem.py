@@ -81,7 +81,7 @@ class VAMetric_conv(nn.Module):
 
 
 class VA_lstm(nn.Module):
-    def __init__(self, hidden_size=128 * 3, num_layers=2):
+    def __init__(self, hidden_size=128 * 3, num_layers=3):
         super(VA_lstm, self).__init__()
 
         self.hidden_size = hidden_size
