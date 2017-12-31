@@ -175,10 +175,10 @@ class VA_lstm(nn.Module):
         self.afc1 = nn.Linear(128, 128)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 5),
-                               stride=128)  # output bn * 16 * 118
-        self.conv2 = nn.Conv1d(in_channels=16, out_channels=16, kernel_size=8, stride=1)  # bn*16*111
+                               stride=128)  # output bn * 16 * 116
+        self.conv2 = nn.Conv1d(in_channels=16, out_channels=16, kernel_size=8, stride=1)  # bn*16*109
         self.dp = nn.Dropout(p=0.1)
-        self.vafc1 = nn.Linear(16 * 111, 1024)
+        self.vafc1 = nn.Linear(16 * 109, 1024)
         self.vafc2 = nn.Linear(1024, 2)
         self.Linear_init()
 
