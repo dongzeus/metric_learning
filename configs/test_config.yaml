@@ -8,7 +8,7 @@ audio_flist: './filelists/test_Name_List.txt'
 workers: 4
 batchSize: 50
 checkpoint_folder: ./checkpoints
-init_model: './checkpoints/VA_METRIC_state_epoch1.pth'
+init_model: './checkpoints/VA_LSTM_state_epoch260_model1.pth'
 topk: 5
 init_encoder: ''
 init_decoder: ''

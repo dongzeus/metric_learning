@@ -171,14 +171,7 @@ def main():
     test_audio_loader = torch.utils.data.DataLoader(test_audio_dataset, batch_size=opt.batchSize,
                                                     shuffle=False, num_workers=int(opt.workers))
     # create model
-    model = models.VAMetric_conv()
-    # if opt.model is 'VAMetric':
-    #     model = models.VAMetric()
-    # elif opt.model is 'VAMetric2':
-    #     model = models.VAMetric2()
-    # else:
-    #     model = models.VAMetric()
-    #     opt.model = 'VAMetric'
+    model = models.VA_lstm()
 
     if opt.init_model != '':
         print('loading pretrained model from {0}'.format(opt.init_model))
