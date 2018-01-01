@@ -144,9 +144,9 @@ def test(video_loader, audio_loader, model_ls, opt):
         print('==================================================================================')
 
         if num == 0:
-            simmat_ensem = torch.pow(sim_mat, 2)
+            simmat_ensem = sim_mat
         else:
-            simmat_ensem = simmat_ensem + torch.pow(sim_mat, 2)
+            simmat_ensem = simmat_ensem + sim_mat
 
     sorted, indices = torch.sort(simmat_ensem, 0, descending=True)
     np_indices = indices.cpu().data.numpy()
