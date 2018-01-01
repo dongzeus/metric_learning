@@ -81,7 +81,7 @@ class VAMetric_conv(nn.Module):
 
 
 class VA_lstm(nn.Module):
-    def __init__(self, hidden_size=128 * 3, num_layers=3):
+    def __init__(self, hidden_size=128 * 3, num_layers=2):
         super(VA_lstm, self).__init__()
 
         self.hidden_size = hidden_size
@@ -98,11 +98,11 @@ class VA_lstm(nn.Module):
                              batch_first=True, bidirectional=self.bidirection)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 3 * 2),
-                               stride=128 * 3 * 2)  # output bn * 16 * 118
+                               stride=16 * 3 * 2)  # output bn * 16 * 118
         # self.mp1 = nn.MaxPool1d(kernel_size=3)  # bn * 16 * 39
         # self.conv2 = nn.Conv1d(in_channels=8, out_channels=8, kernel_size=4, stride=1)  # bn * 16 * 36
-        self.vlfc = nn.Linear(118 * self.hidden_size * 2, 118 * self.hidden_size * 2)
-        self.alfc = nn.Linear(118 * self.hidden_size * 2, 118 * self.hidden_size * 2)
+        # self.vlfc = nn.Linear(118 * self.hidden_size * 2, 118 * self.hidden_size * 2)
+        # self.alfc = nn.Linear(118 * self.hidden_size * 2, 118 * self.hidden_size * 2)
         self.dp = nn.Dropout(p=0.3)
         self.vafc1 = nn.Linear(16 * 118, 1024)
         self.vafc2 = nn.Linear(1024, 2)
@@ -125,8 +125,8 @@ class VA_lstm(nn.Module):
         vlstm = self.vlstm(vfeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
         alstm = self.alstm(afeat_3, self.param_init(batch_size=bs, hidden_size=self.hidden_size))[0]
 
-        vlstm = F.relu(self.vlfc(vlstm))
-        alstm = F.relu(self.alfc(alstm))
+        # vlstm = F.relu(self.vlfc(vlstm))
+        # alstm = F.relu(self.alfc(alstm))
 
         vlstm = vlstm.resize(bs, 1, 1, 118 * self.hidden_size * 2)
         alstm = alstm.resize(bs, 1, 1, 118 * self.hidden_size * 2)
