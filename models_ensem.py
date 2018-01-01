@@ -98,12 +98,12 @@ class VA_lstm(nn.Module):
                              batch_first=True, bidirectional=self.bidirection)
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=(2, 128 * 3 * 2),
-                               stride=128 * 3 * 2)  # output bn * 16 * 118
+                               stride=8 * 3 * 2)  # output bn * 16 * 118
         # self.mp1 = nn.MaxPool1d(kernel_size=3)  # bn * 16 * 39
         # self.conv2 = nn.Conv1d(in_channels=8, out_channels=8, kernel_size=4, stride=1)  # bn * 16 * 36
 
         self.dp = nn.Dropout(p=0.3)
-        self.vafc1 = nn.Linear(8 * 118, 1024)
+        self.vafc1 = nn.Linear(16 * 118, 1024)
         self.vafc2 = nn.Linear(1024, 2)
         self.vafc3 = nn.Linear(1024, 2)
 
