@@ -171,6 +171,7 @@ def main():
     test_audio_loader = torch.utils.data.DataLoader(test_audio_dataset, batch_size=opt.batchSize,
                                                     shuffle=False, num_workers=int(opt.workers))
     # create model
+    m_ls = []
     model = models.VA_lstm()
 
     if opt.init_model != '':
@@ -182,8 +183,8 @@ def main():
     if opt.cuda:
         print('shift model to GPU .. ')
         model = model.cuda()
-
-    test(test_video_loader, test_audio_loader, model, opt)
+    m_ls.append(model)
+    test(test_video_loader, test_audio_loader, m_ls, opt)
 
 
 if __name__ == '__main__':
