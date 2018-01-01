@@ -97,14 +97,14 @@ class VA_lstm(nn.Module):
         self.alstm = nn.LSTM(input_size=128 * 3, hidden_size=self.hidden_size, num_layers=self.num_layers, dropout=0.1,
                              batch_first=True, bidirectional=self.bidirection)
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 3 * 2),
-                               stride=16 * 3 * 2)  # output bn * 16 * 118
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(2, 128 * 3 * 2*2),
+                               stride=128 * 3 * 2)  # output bn * 16 * 118
         # self.mp1 = nn.MaxPool1d(kernel_size=3)  # bn * 16 * 39
         # self.conv2 = nn.Conv1d(in_channels=8, out_channels=8, kernel_size=4, stride=1)  # bn * 16 * 36
         # self.vlfc = nn.Linear(118 * self.hidden_size * 2, 118 * self.hidden_size * 2)
         # self.alfc = nn.Linear(118 * self.hidden_size * 2, 118 * self.hidden_size * 2)
         self.dp = nn.Dropout(p=0.3)
-        self.vafc1 = nn.Linear(16 * 118, 1024)
+        self.vafc1 = nn.Linear(16 * 117, 1024)
         self.vafc2 = nn.Linear(1024, 2)
         self.vafc3 = nn.Linear(1024, 2)
 
@@ -243,7 +243,7 @@ class lstm_loss(nn.Module):
         loss_balance2 = F.relu(
             0.9 - (torch.mean(torch.pow(sim_1[bs / 2:bs], 1)) - torch.mean(torch.pow(sim_1[0:bs / 2], 1))))
 
-        loss = 0.1 * loss_nega + 0.1 * loss_posi + 1 * loss_balance1 + 0 * loss_balance2
+        loss = 0.5 * loss_nega + 0.5 * loss_posi + 1 * loss_balance1 + 1 * loss_balance2
 
         # print(loss_posi.data[0], loss_nega.data[0], loss_balance1.data[0], loss_balance2.data[0])
         return loss
